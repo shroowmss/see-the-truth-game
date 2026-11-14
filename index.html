@@ -548,8 +548,9 @@ ANIM.aland={f:AF([44,4],[45,4]),fps:30};
 const HV=k=>2000+k;// heavy = the original sheet mixed with the purple power-punch sheet (frames 40-49): crouch -> energy builds with the charge -> lunge + starburst -> the original shockwave -> settle
 ANIM.hvc0={f:[40,40,41,41,41,42,42].map(HV),fps:18};ANIM.hvcl={f:[42,43].map(HV),fps:8,loop:1};ANIM.hvcl2={f:[43,44].map(HV),fps:11,loop:1};ANIM.hvcl3={f:[44,43,44,42].map(HV),fps:18,loop:1};
 ANIM.hvr={f:[45,45,45,46,46,46,46,46,46,47,47,47,47,47,48,48,48,48,48,49,49,49,49,49,49,49,49,49,49,49].map(HV),fps:24};
-const HVY={hold:.2,full:1.1,minWind:7/18,hitA:3,hitB:10.5,recover:1.15};
-function hvcStep(dt){P.ch=Math.min(1,(P.ch||0)+dt/HVY.full);if(P.ch>=1&&!P.chMax){P.chMax=1;pop(P.x,P.y-60,'MAX','#e0a0ff');rumble(.2,.6,90);spark(P.x,P.y-30,14,['#fff','#c070ff','#ff9be8'],90);}
+const HVY={hold:.3,full:1.1,minWind:7/18,hitA:3,hitB:10.5,recover:1.15};
+function hvcStep(dt){if(!keys.KeyZ&&P.t<.2){P.ch=0;P.chMax=0;setSt('idle');return;}   // let go early = it was only a light attack
+  P.ch=Math.min(1,(P.ch||0)+dt/HVY.full);if(P.ch>=1&&!P.chMax){P.chMax=1;pop(P.x,P.y-60,'MAX','#e0a0ff');rumble(.2,.6,90);spark(P.x,P.y-30,14,['#fff','#c070ff','#ff9be8'],90);}
   if(!keys.KeyZ&&P.t>=HVY.minWind){const c=P.ch;setSt('hvr');P.hcharge=c;P.hitset=new Set();P.ch=0;P.chMax=0;}}
 function hvrStep(dir){const f=P.t*24;if(f>=4&&!P.hvBoom){P.hvBoom=1;diaThrow(P.hcharge||0);rumble(.5+.5*P.hcharge,1,180+160*P.hcharge);shakeT=Math.max(shakeT,.14+.18*P.hcharge);landDust(14,90+80*P.hcharge,9);}
   if(f>=30||(P.t>HVY.recover&&(dir||hit.KeyZ))){P.hvBoom=0;setSt(dir?'run':'idle');}}
