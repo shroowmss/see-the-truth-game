@@ -1801,7 +1801,9 @@ function chillNear(){if(Math.abs(CH.x-CH_PLUG)<24)return 'shop';if(Math.abs(CH.x
 const lifaGone=()=>{try{return localStorage.getItem('stt_portal')==='1';}catch(e){return false;}};
 const LIFA_GONE=[[['O','...'],['O','he was standing right here']],[['O','still smells like his loud'],['O','hold on lifa. im coming']],[['O','that tv is gonna catch these hands']]];
 function chillAct(what){if(what==='shop'){let met=false;try{met=localStorage.getItem(MIKE_K)==='1';}catch(e){}
-    if(!met){CH.talk={lines:MIKE_INTRO,i:0,t:0,then:'shop'};CH.ui='talk';CH.walkTo=null;CH.face=1;CH.st='idle';return;}
+    const gone=lifaGone();let asked=false;try{asked=localStorage.getItem(MIKE_LIFA_K)==='1';}catch(e){}
+    if(!met||(gone&&!asked)){if(gone)try{localStorage.setItem(MIKE_LIFA_K,'1');}catch(e){}
+      CH.talk={lines:!met?(gone?MIKE_INTRO_GONE:MIKE_INTRO):MIKE_LIFA,i:0,t:0,then:'shop'};CH.ui='talk';CH.walkTo=null;CH.face=1;CH.st='idle';return;}
     CH.ui='shop';CH.sel=Math.max(0,SHOP.findIndex(s=>!PERK(s.id)));CH.face=1;}
   else if(what==='talk'&&lifaGone()){CH.last=(CH.last+1)%LIFA_GONE.length;CH.talk={lines:LIFA_GONE[CH.last],i:0,t:0,then:null};CH.ui='talk';CH.walkTo=null;CH.after=null;CH.st='idle';}
   else if(what==='talk'){let seen=[];try{seen=JSON.parse(localStorage.getItem(CHAT_K)||'[]');}catch(e){}
@@ -1810,6 +1812,15 @@ function chillAct(what){if(what==='shop'){let met=false;try{met=localStorage.get
     else{CH.last=(CH.last+1+Math.floor(Math.random()*(CHAT_IDLE.length-1)))%CHAT_IDLE.length;lines=CHAT_IDLE[CH.last];}
     CH.talk={lines,i:0,t:0,then:c&&c.then};CH.ui='talk';const tg=CH.x<CH_LIFA?CH_LIFA-34:CH_LIFA+34;CH.walkTo=Math.abs(CH.x-tg)>1&&Math.abs(CH.x-CH_LIFA)<34?tg:null;CH.after=null;CH.face=CH.x<CH_LIFA?1:-1;}}
 function chillConfirm(){if(CH.ev)return;if(CH.ui==='shop')return chillBuy();if(CH.ui==='talk')return chillTalkNext();const n=chillNear();if(n)chillAct(n);}
+// Mike after the portal: a different first meeting, and a one-time check-in if they'd already met
+const MIKE_INTRO_GONE=[['O','mike?!?'],['M','yoyoo'],['O','since when you work at the plug??'],['M','couple weeks now. somebody gotta keep the shelves stacked'],
+ ['O','i aint seen you since forever bro'],['M','i been locked in. you the one out here fighting robots'],['O','...who told you that'],
+ ['M','lifa. he tells everybody everything'],['M','where he at tho? he aint come thru for a light tonight'],['O','a tv took him'],['M','...a what'],
+ ['O','a tv. with a eye. opened a portal right there'],['M','bro how much did yall smoke'],['O','we didnt even get to spark it mike'],
+ ['M','damn. thats the real tragedy'],['O','im getting him back'],['M','say less. you gon need supplies then. take a look']];
+const MIKE_LIFA=[['M','yo where lifa at? he aint come thru for a light tonight'],['O','a tv took him'],['M','...a what'],['O','a tv. with a eye. opened a portal right there'],
+ ['M','bro how much did yall smoke'],['O','we didnt even get to spark it mike'],['M','damn. thats the real tragedy'],['O','im getting him back'],['M','then stock up. take a look']];
+const MIKE_LIFA_K='stt_mike_lifa';
 function chillTalkNext(){const T_=CH.talk,L=T_.lines[T_.i];if(T_.t*38<L[1].length){T_.t=L[1].length/38;return;}T_.i++;T_.t=0;if(T_.i>=T_.lines.length){CH.talk=null;CH.ui=null;if(T_.then==='portal'){portalStart();return;}if(T_.then==='shop'){try{localStorage.setItem(MIKE_K,'1');}catch(e){}chillAct('shop');}}}
 function chillBuy(){const it=SHOP[CH.sel];if(PERK(it.id)){CH.msg='YOU ALREADY GOT THAT';CH.msgT=G;return;}
   if(CH.wallet<it.price){CH.msg='NOT ENOUGH BREAD';CH.msgT=G;return;}
