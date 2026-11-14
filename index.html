@@ -1798,9 +1798,12 @@ const MIKE_INTRO=[['O','mike?!?'],['M','yoyoo'],['O','since when you work at the
  ['M','but fr its good seeing you gang'],['O','you too twin. what you got for me?'],['M','say less. take a look']];
 function chillEnter(){MREC=loadRecs();CH.idleT=0;CH.blimpT0=null;CH.blimpDone=false;CH.blimpAt=Math.random()<.15?G+40+Math.random()*80:Infinity;Object.assign(CH,{x:60,face:1,st:'idle',t:0,ui:null,sel:0,talk:null,walkTo:null,after:null,fx:[],ev:null});CH.wallet=getWallet();if(!CH.bg)CH.bg=buildChillBG();}
 function chillNear(){if(Math.abs(CH.x-CH_PLUG)<24)return 'shop';if(Math.abs(CH.x-CH_LIFA)<28)return 'talk';return null;}
+const lifaGone=()=>{try{return localStorage.getItem('stt_portal')==='1';}catch(e){return false;}};
+const LIFA_GONE=[[['O','...'],['O','he was standing right here']],[['O','still smells like his loud'],['O','hold on lifa. im coming']],[['O','that tv is gonna catch these hands']]];
 function chillAct(what){if(what==='shop'){let met=false;try{met=localStorage.getItem(MIKE_K)==='1';}catch(e){}
     if(!met){CH.talk={lines:MIKE_INTRO,i:0,t:0,then:'shop'};CH.ui='talk';CH.walkTo=null;CH.face=1;CH.st='idle';return;}
     CH.ui='shop';CH.sel=Math.max(0,SHOP.findIndex(s=>!PERK(s.id)));CH.face=1;}
+  else if(what==='talk'&&lifaGone()){CH.last=(CH.last+1)%LIFA_GONE.length;CH.talk={lines:LIFA_GONE[CH.last],i:0,t:0,then:null};CH.ui='talk';CH.walkTo=null;CH.after=null;CH.st='idle';}
   else if(what==='talk'){let seen=[];try{seen=JSON.parse(localStorage.getItem(CHAT_K)||'[]');}catch(e){}
     const c=CHATS.find(c=>!seen.includes(c.id)&&mCleared(c.req));let lines;
     if(c){lines=c.lines;seen.push(c.id);try{localStorage.setItem(CHAT_K,JSON.stringify(seen));}catch(e){}}
@@ -1976,15 +1979,17 @@ function drawChill(dt){chillUpdate(dt);const ts=G-s0,BG=CH.bg;
 function drawChillChars(dt,ts){
   if(CH.ev)drawPortalEvent(dt);else{
   // shadows, Lifa, Onyx
-  ctx.fillStyle='rgba(0,0,0,.4)';for(const x of [CH.x,CH_LIFA]){ctx.fillRect(x-16,CH_FY-2,32,3);ctx.fillRect(x-11,CH_FY+1,22,1);}
-  spr('lifa',G,CH_LIFA,CH_FY,CH.ui==='talk'&&CH.x>CH_LIFA&&!(CH.talk&&CH.talk.then),0);
+  const LG=lifaGone();ctx.fillStyle='rgba(0,0,0,.4)';for(const x of LG?[CH.x]:[CH.x,CH_LIFA]){ctx.fillRect(x-16,CH_FY-2,32,3);ctx.fillRect(x-11,CH_FY+1,22,1);}
+  if(!LG)spr('lifa',G,CH_LIFA,CH_FY,CH.ui==='talk'&&CH.x>CH_LIFA&&!(CH.talk&&CH.talk.then),0);
+  else{px(CH_LIFA-4,CH_FY-2,6,1,'#e8e0d0');px(CH_LIFA+2,CH_FY-2,1,1,Math.floor(G*3)%2?'#ff9a3c':'#c0503a');   // all that's left: his joint, still burning on the floor
+    for(let m=0;m<4;m++){const t=(G*.3+m/4)%1;ctx.globalAlpha=.22*(1-t);px(CH_LIFA+2+Math.round(Math.sin(G*1.5+m*2)*2*t),CH_FY-4-Math.round(t*22),1,2,'#e6def8');}ctx.globalAlpha=1;}
   {let an=CH.st==='run'?'run':CH.st==='puff'?'puff':'idle',at=CH.t;if(an==='puff'&&adone('puff',at))an='idle';spr(an,at,CH.x,CH_FY,CH.face<0,an==='run'?-.07:0);}
   // smoke: Lifa's always lit, Onyx's puff
-  for(let m=0;m<7;m++){const t=(G*.22+m/7)%1;ctx.globalAlpha=.28*(1-t)*(t<.1?t*10:1);ctx.fillStyle='#e6def8';ctx.beginPath();ctx.arc(CH_LIFA-10+Math.sin(G*1.2+m)*3+t*10,CH_FY-36-t*46,2+t*8,0,7);ctx.fill();}ctx.globalAlpha=1;
+  if(!LG)for(let m=0;m<7;m++){const t=(G*.22+m/7)%1;ctx.globalAlpha=.28*(1-t)*(t<.1?t*10:1);ctx.fillStyle='#e6def8';ctx.beginPath();ctx.arc(CH_LIFA-10+Math.sin(G*1.2+m)*3+t*10,CH_FY-36-t*46,2+t*8,0,7);ctx.fill();}ctx.globalAlpha=1;
   if(CH.st==='puff'&&CH.t>.69){const k=Math.min(1,(CH.t-.69)/.56);for(let m=0;m<5;m++){ctx.globalAlpha=.45*(1-k);ctx.fillStyle='#e6def8';ctx.beginPath();ctx.arc(CH.x+CH.face*(20+m*5+k*14),CH_FY-40-k*18-m*2,4+k*10+m,0,7);ctx.fill();}ctx.globalAlpha=1;}
   }
   // prompt over whoever is in reach
-  if(!CH.ui&&!trans){const n=chillNear();if(n){const tx=n==='shop'?CH_PLUG:CH_LIFA,ty=n==='shop'?134:138,lab=PR('UP: ','[A] ','')+(n==='shop'?'SHOP':'TALK'),w=tpW(lab)+10,b=Math.round(Math.sin(G*4)*1.5);
+  if(!CH.ui&&!trans){const n=chillNear();if(n){const tx=n==='shop'?CH_PLUG:CH_LIFA,ty=n==='shop'?134:138,lab=PR('UP: ','[A] ','')+(n==='shop'?'SHOP':lifaGone()?'LOOK':'TALK'),w=tpW(lab)+10,b=Math.round(Math.sin(G*4)*1.5);
     px(tx-w/2,ty-11+b,w,13,'rgba(10,4,32,.9)');px(tx-w/2,ty-11+b,w,1,'#ffe66d');px(tx-w/2,ty+1+b,w,1,'#ffe66d');TP(lab,tx,ty-1+b,8,'#ffe66d','center');}}
   // HUD
   T('CHILL SPOT',CX,17,8,'#9dffa0','center','#12042c');
@@ -2264,7 +2269,7 @@ function mapLifeUnder(dt){
   px(64,146,14,10,'#1e6a3e');px(64,146,14,2,'#2f8a52');px(66,148,10,7,'#185a34');px(65,156,2,2,'#0a0a14');px(75,156,2,2,'#0a0a14');
   if(Math.sin(t*23)+Math.sin(t*7.3)>1.1)for(let q=0;q<3;q++){const k=(t*4+q*.3)%1;px(108+(q-1)*2+k*3*(q-1),132+k*k*18,1,1,'#fff2a0');}
   // ---- (3) chill spot: Lifa hangs out by the bench, music notes float off the boombox
-  if(mOpen(2)){ctx.save();ctx.translate(116,111);ctx.scale(.42,.42);spr('lifa',t,0,0,1,0);ctx.restore();
+  if(mOpen(2)){if(!lifaGone()){ctx.save();ctx.translate(116,111);ctx.scale(.42,.42);spr('lifa',t,0,0,1,0);ctx.restore();}
     px(97,104,5,3,'#2a2a3a');px(98,105,1,1,Math.sin(t*8)>0?'#ff5ee8':'#8a3a7a');px(100,105,1,1,Math.sin(t*8)>0?'#ff5ee8':'#8a3a7a');
     for(let m=0;m<2;m++){const k=(t*.4+m/2)%1;ctx.globalAlpha=1-k;px(99+Math.sin(t+m*3)*3+k*4,101-k*16,1,2,'#ffe66d');px(100+Math.sin(t+m*3)*3+k*4,100-k*16,1,1,'#ffe66d');}ctx.globalAlpha=1;}
   // ---- (4) 1-2 corner store: neon roof line, security camera sweep, a tiny patrol bot
