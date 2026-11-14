@@ -1815,10 +1815,10 @@ function chillConfirm(){if(CH.ev)return;if(CH.ui==='shop')return chillBuy();if(C
 // Mike after the portal: a different first meeting, and a one-time check-in if they'd already met
 const MIKE_INTRO_GONE=[['O','mike?!?'],['M','yoyoo'],['O','since when you work at the plug??'],['M','couple weeks now. somebody gotta keep the shelves stacked'],
  ['O','i aint seen you since forever bro'],['M','i been locked in. you the one out here fighting robots'],['O','...who told you that'],
- ['M','lifa. he tells everybody everything'],['M','where he at tho? he aint come thru for a light tonight'],['O','a tv took him'],['M','...a what'],
+ ['M','lifa. he tells everybody everything'],['M','where he at tho? he aint come thru for a light tonight'],['O','a tv took him'],['M','...a what slim'],
  ['O','a tv. with a eye. opened a portal right there'],['M','bro how much did yall smoke'],['O','we didnt even get to spark it mike'],
  ['M','damn. thats the real tragedy'],['O','im getting him back'],['M','say less. you gon need supplies then. take a look']];
-const MIKE_LIFA=[['M','yo where lifa at? he aint come thru for a light tonight'],['O','a tv took him'],['M','...a what'],['O','a tv. with a eye. opened a portal right there'],
+const MIKE_LIFA=[['M','yo where lifa at? he aint come thru for a light tonight'],['O','a tv took him'],['M','...a what slim'],['O','a tv. with a eye. opened a portal right there'],
  ['M','bro how much did yall smoke'],['O','we didnt even get to spark it mike'],['M','damn. thats the real tragedy'],['O','im getting him back'],['M','then stock up. take a look']];
 const MIKE_LIFA_K='stt_mike_lifa';
 function chillTalkNext(){const T_=CH.talk,L=T_.lines[T_.i];if(T_.t*38<L[1].length){T_.t=L[1].length/38;return;}T_.i++;T_.t=0;if(T_.i>=T_.lines.length){CH.talk=null;CH.ui=null;if(T_.then==='portal'){portalStart();return;}if(T_.then==='shop'){try{localStorage.setItem(MIKE_K,'1');}catch(e){}chillAct('shop');}}}
