@@ -1799,7 +1799,7 @@ const MIKE_INTRO=[['O','mike?!?'],['M','yoyoo'],['O','since when you work at the
 function chillEnter(){MREC=loadRecs();CH.idleT=0;CH.blimpT0=null;CH.blimpDone=false;CH.blimpAt=Math.random()<.15?G+40+Math.random()*80:Infinity;Object.assign(CH,{x:60,face:1,st:'idle',t:0,ui:null,sel:0,talk:null,walkTo:null,after:null,fx:[],ev:null});CH.wallet=getWallet();if(!CH.bg)CH.bg=buildChillBG();}
 function chillNear(){if(Math.abs(CH.x-CH_PLUG)<24)return 'shop';if(Math.abs(CH.x-CH_LIFA)<28)return 'talk';return null;}
 const lifaGone=()=>{try{return localStorage.getItem('stt_portal')==='1';}catch(e){return false;}};
-const LIFA_GONE=[[['O','...'],['O','he was standing right here']],[['O','still smells like his loud'],['O','hold on lifa. im coming']],[['O','that tv is gonna catch these hands']]];
+const LIFA_GONE=[[['O','...'],['O','he was standing right here']],[['O','still smells like his loud'],['O','hold on lifa. im coming']],[['O','a tv with a eyeball stole my mans....lyfe']]];
 function chillAct(what){if(what==='shop'){let met=false;try{met=localStorage.getItem(MIKE_K)==='1';}catch(e){}
     const gone=lifaGone();let asked=false;try{asked=localStorage.getItem(MIKE_LIFA_K)==='1';}catch(e){}
     if(!met||(gone&&!asked)){if(gone)try{localStorage.setItem(MIKE_LIFA_K,'1');}catch(e){}
