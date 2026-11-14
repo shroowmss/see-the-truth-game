@@ -953,23 +953,34 @@ function drawPlay(dt){
   if(ts<.5){ctx.fillStyle='rgba(4,4,26,'+(1-ts/.5)+')';ctx.fillRect(0,0,W,H);}
 }
 // ================= MUSIC: the player streams a SoundCloud playlist through SoundCloud's own widget =================
-const MU={url:'https://soundcloud.com/llaswill/sets/7-14-2026',w:null,ready:0,on:0,want:1,title:'',artist:'',n:0,i:0,toastT:-9,err:'',vol:60,errN:0,init:0,gest:0,started:0};
+const MU={hid:'position:fixed;left:-9999px;top:0;width:320px;height:166px;border:0;opacity:0;pointer-events:none',tapT:0,box:null,f:null,url:'https://soundcloud.com/llaswill/sets/7-14-2026',w:null,ready:0,on:0,want:1,title:'',artist:'',n:0,i:0,toastT:-9,err:'',vol:60,errN:0,init:0,gest:0,started:0};
 function muInit(){if(MU.init)return;MU.init=1;const h=location.hostname;
   if(!(location.protocol==='file:'||/github\.io$/.test(h)||h==='localhost'||h==='127.0.0.1')){MU.err='MUSIC PLAYS ON THE LIVE SITE';return;}
   try{MU.want=localStorage.getItem('stt_music')!=='0';}catch(e){}
-  const f=document.createElement('iframe');f.id='scw';f.allow='autoplay';f.title='SoundCloud player';f.setAttribute('scrolling','no');f.style.cssText='position:fixed;left:-9999px;top:0;width:320px;height:166px;border:0;opacity:0;pointer-events:none';
+  const f=document.createElement('iframe');f.id='scw';f.allow='autoplay';f.title='SoundCloud player';f.setAttribute('scrolling','no');f.style.cssText=MU.hid;MU.f=f;
   f.src='https://w.soundcloud.com/player/?url='+encodeURIComponent(MU.url)+'&auto_play=false&show_artwork=false&visual=false&hide_related=true&show_comments=false&show_teaser=false';
   document.body.appendChild(f);const s=document.createElement('script');s.src='https://w.soundcloud.com/player/api.js';s.onerror=()=>{MU.err='MUSIC OFFLINE';};
   s.onload=()=>{try{const w=SC.Widget(f),E=SC.Widget.Events;MU.w=w;
-    w.bind(E.READY,()=>{MU.ready=1;MU.err='';w.setVolume(MU.vol);w.getSounds(a=>{MU.n=a?a.length:0;});muInfo();if(MU.want&&MU.gest&&!MU.started){MU.started=1;w.play();}});
-    w.bind(E.PLAY,()=>{MU.on=1;MU.errN=0;muInfo();});w.bind(E.PAUSE,()=>{MU.on=0;});
+    w.bind(E.READY,()=>{MU.ready=1;MU.err='';w.setVolume(MU.vol);w.getSounds(a=>{MU.n=a?a.length:0;});muInfo();if(MU.want&&MU.gest&&!MU.started){MU.started=1;muPlay();}});
+    w.bind(E.PLAY,()=>{MU.on=1;MU.errN=0;muHide();muInfo();});w.bind(E.PAUSE,()=>{MU.on=0;});
     w.bind(E.FINISH,()=>{w.getCurrentSoundIndex(i=>{if(MU.n&&i>=MU.n-1)w.skip(0);});});
     w.bind(E.ERROR,()=>{if(++MU.errN<=Math.max(1,MU.n))w.next();else MU.err='PLAYLIST UNAVAILABLE';});
   }catch(e){MU.err='MUSIC OFFLINE';}};document.head.appendChild(s);}
 function muInfo(){if(!MU.w)return;try{MU.w.getCurrentSound(s=>{if(!s)return;const t=(s.title||'').toUpperCase();if(t!==MU.title){MU.title=t;MU.artist=((s.user&&s.user.username)||'').toUpperCase();MU.toastT=G;}});MU.w.getCurrentSoundIndex(i=>{MU.i=i||0;});}catch(e){}}
-function muToggle(){MU.toastT=G;if(!MU.w||!MU.ready)return;MU.want=!MU.on;try{localStorage.setItem('stt_music',MU.want?'1':'0');}catch(e){}MU.started=1;if(MU.on)MU.w.pause();else MU.w.play();}
+function muToggle(){MU.toastT=G;if(!MU.w||!MU.ready)return;MU.want=!MU.on;try{localStorage.setItem('stt_music',MU.want?'1':'0');}catch(e){}MU.started=1;if(MU.on)MU.w.pause();else muPlay();}
+// Phones (iPhone above all) only let audio start from a tap INSIDE the SoundCloud player itself.  So if play was asked for and nothing
+// started, bring the real player on screen once; after that first tap the game's own controls work.
+function muPlay(){if(!MU.w)return;MU.w.play();clearTimeout(MU.tapT);MU.tapT=setTimeout(()=>{if(MU.want&&!MU.on&&MU.ready)muShow();},1400);}
+function muShow(){if(MU.box||!MU.f)return;if(scene==='play'&&!paused)setPause(true);
+  const b=document.createElement('div');b.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:9999;background:rgba(10,4,30,.96);border-top:2px solid #ff5500;height:calc(214px + env(safe-area-inset-bottom));box-sizing:border-box;padding:10px 12px;font:bold 13px/1.3 monospace;color:#fff;text-align:center';
+  const t=document.createElement('div');t.textContent='TAP PLAY BELOW ONCE TO TURN THE MUSIC ON';t.style.marginBottom='8px';
+  const x=document.createElement('button');x.textContent='NO MUSIC';x.style.cssText='position:absolute;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom));padding:8px 16px;background:#2a1c48;color:#fff;border:1px solid #8a7ac0;border-radius:6px;font:bold 12px monospace';
+  x.addEventListener('pointerdown',e=>{e.stopPropagation();e.preventDefault();MU.want=0;try{localStorage.setItem('stt_music','0');}catch(_){}muHide();});
+  b.addEventListener('pointerdown',e=>e.stopPropagation());b.appendChild(t);b.appendChild(x);document.body.appendChild(b);MU.box=b;
+  MU.f.style.cssText='position:fixed;left:12px;width:calc(100% - 24px);bottom:calc(54px + env(safe-area-inset-bottom));height:120px;border:0;border-radius:6px;z-index:10000;opacity:1';}   // restyled in place: moving an iframe in the page would reload it
+function muHide(){clearTimeout(MU.tapT);if(!MU.box)return;const b=MU.box;MU.box=null;b.remove();if(MU.f)MU.f.style.cssText=MU.hid;}
 function muSkip(d){MU.toastT=G;if(!MU.w||!MU.ready)return;if(d>0){if(MU.n&&MU.i>=MU.n-1)MU.w.skip(0);else MU.w.next();}else{if(MU.n&&MU.i<=0)MU.w.skip(MU.n-1);else MU.w.prev();}setTimeout(muInfo,500);setTimeout(muInfo,1600);}
-function muGesture(){MU.gest=1;muInit();if(MU.ready&&MU.want&&!MU.on&&!MU.started){MU.started=1;MU.w.play();}}
+function muGesture(){MU.gest=1;muInit();if(MU.ready&&MU.want&&!MU.on&&!MU.started){MU.started=1;muPlay();}}
 function muNote(x,y,c){px(x+1,y,4,1,c);px(x+1,y,1,6,c);px(x+4,y,1,5,c);px(x-1,y+5,2,2,c);px(x+2,y+4,2,2,c);}
 function muBars(x,y,c,on){for(let i=0;i<4;i++){const h=on?2+Math.round(3+3*Math.sin(G*(7+i*2.3)+i*1.9)):2;px(x+i*3,y+8-h,2,h,c);}}
 function muText(s,x,y,w,col){ctx.save();ctx.beginPath();ctx.rect(x,y-9,w,12);ctx.clip();const tw=TW(s);let dx=0;if(tw>w){const span=tw-w+16,ph=(G*14)%(span*2+60);dx=-Math.min(span,Math.max(0,ph<span+30?ph-15:span*2+45-ph));}T(s,x+Math.round(dx),y,8,col,'left');ctx.restore();}
