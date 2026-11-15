@@ -218,7 +218,7 @@ const keys={},hit={};let G=0,scene='title',s0=0,trans=null,menuOpen=false,sel=0,
 const hasSave=()=>{try{return localStorage.getItem('stt_save')==='1';}catch(e){return false;}};
 const doSave=()=>{try{localStorage.setItem('stt_save','1');}catch(e){}};
 function go(to){if(trans)return;trans={to,t:0,sw:0};}
-function enterScene(s){s0=G;fx.length=0;paused=false;if(s==='cutscene')cs={i:0,tl:0};if(s==='play'){const kp=NEXTLV?[cash,RUN.t,RUN.hits,RUN.kos,P.hp]:null;loadLevel(NEXTLV||(LEVELS[lsel]||LEVELS[0]).id);NEXTLV=null;resetPlay();if(kp){cash=kp[0];RUN.t=kp[1];RUN.hits=kp[2];RUN.kos=kp[3];P.hp=Math.max(1,kp[4]);}doSave();}if(s==='title'){menuOpen=false;sel=0;if(titleSkip){titleSkip=false;s0=G-3;menuOpen=true;sel=TSEL;TSEL=2;}}if(s==='select')mapEnter();if(s==='chill')chillEnter();if(s==='void')voidEnter();
+function enterScene(s){s0=G;fx.length=0;paused=false;if(s==='cutscene')cs={i:0,tl:0};if(s==='play'){const kp=NEXTLV?[cash,RUN.t,RUN.hits,RUN.kos,P.hp]:null;loadLevel(NEXTLV||(LEVELS[lsel]||LEVELS[0]).id);NEXTLV=null;resetPlay();EYEKP=kp;if(kp){EYE_DEATHS=0;cash=kp[0];RUN.t=kp[1];RUN.hits=kp[2];RUN.kos=kp[3];P.hp=Math.max(1,kp[4]);}doSave();}if(s==='title'){menuOpen=false;sel=0;if(titleSkip){titleSkip=false;s0=G-3;menuOpen=true;sel=TSEL;TSEL=2;}}if(s==='select')mapEnter();if(s==='chill')chillEnter();if(s==='void')voidEnter();
   LIGHT=s==='title'?1:s==='cutscene'?.45:s==='act'?.5:s==='play'?.22:0;}
 const MENU=['NEW GAME','CONTINUE','LEVEL SELECT'];
 function choose(){if(sel===0){lsel=0;afterAct='controls';go('act');}else if(sel===1){if(hasSave())go('play');else msgT=G;}else go('select');}
@@ -991,7 +991,8 @@ let OVER=null,WIN=null;const RUN={t:0,hits:0,kos:0};
 const OVQ=['THE CITY TAKES THIS ROUND','SHAKE IT OFF, ONYX','LIFA IS STILL WAITING','LIGHTS OUT'];
 const fmtT=t=>{t=Math.floor(Math.max(0,t));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');};
 function gameOver(){if(OVER)return;P.hp=0;shakeT=.45;rumble(1,1,500);for(const k in keys)keys[k]=0;
-  OVER={t:0,sel:0,cash,time:RUN.t,q:CUR==='1-2'&&BOSS.phase==='fight'?'THE CLERK KEEPS HIS LIGHTER':OVQ[Math.floor(Math.random()*OVQ.length)]};}
+  OVER={t:0,sel:0,cash,time:RUN.t,q:CUR==='1-2'&&BOSS.phase==='fight'?'THE CLERK KEEPS HIS LIGHTER':OVQ[Math.floor(Math.random()*OVQ.length)]};
+  if(CUR==='eye'){EYE_DEATHS++;OVER.rdy=4.6;OVER.q=EYE_SAY[(EYE_DEATHS-1)%EYE_SAY.length];}}
 function winStart(){if(won)return;won=true;for(const k in keys)keys[k]=0;const tot=secrets.length,h=RUN.hits;
   const pts=(h===0?3:h<=2?2:h<=5?1:0)+(!tot||found>=tot?2:found*2>=tot?1:0),rank=pts>=5?'S':pts>=4?'A':pts>=2?'B':'C';
   const old=(loadRecs()[CUR==='eye'?'boss':CUR])||{};
@@ -1001,7 +1002,7 @@ function winStart(){if(won)return;won=true;for(const k in keys)keys[k]=0;const t
   saveRecord();try{const r=loadRecs(),o=r[CUR==='eye'?'boss':CUR];if(o){o.time=o.time?Math.min(o.time,RUN.t):RUN.t;const RK='CBAS';if(!o.rank||RK.indexOf(rank)>RK.indexOf(o.rank))o.rank=rank;localStorage.setItem('stt_records',JSON.stringify(r));}}catch(e){}}
 function endBtn(s,x,y,w,on){px(x,y,w,14,on?'rgba(255,94,232,.28)':'rgba(255,255,255,.07)');const c=on?'#ff5ee8':'#4a3a78';px(x,y,w,1,c);px(x,y+13,w,1,c);px(x,y,1,14,c);px(x+w-1,y,1,14,c);
   T(s,x+w/2,y+10,8,on?'#ffffff':'#a49bd6','center');if(on&&Math.floor(G*3)%2)T('>',x+5,y+10,8,'#ffe66d','left');}
-function drawOver(dt){const o=OVER;o.t+=dt;const t=o.t,a=Math.min(1,t/.6);
+function drawOver(dt){const o=OVER;o.t+=dt;if(CUR==='eye')return drawEyeOver(o,dt);const t=o.t,a=Math.min(1,t/.6);
   ctx.fillStyle='rgba(22,2,16,'+(.84*a)+')';ctx.fillRect(0,0,W,H);
   ctx.globalAlpha=.09*a;for(let y=Math.floor(G*24)%4;y<H;y+=4)px(0,y,W,1,'#ff2d55');ctx.globalAlpha=1;
   const s='GAME OVER',cw=17,x0=CX-(s.length*cw)/2+cw/2;
@@ -1033,13 +1034,13 @@ function drawWin(dt){const w=WIN;w.t+=dt;const t=w.t,a=Math.min(1,t/.4),n=w.rows
   if(t>=w.end){endBtn('CONTINUE',CX-98,176,92,w.sel===0);endBtn('REPLAY',CX+6,176,92,w.sel===1);
     const p=PR('LEFT/RIGHT  CHOOSE     ENTER  SELECT','[A] SELECT','');if(p)TP(p,CX,204,8,'#6a5a98','center');}}
 function endPick(i){for(const k in hit)delete hit[k];
-  if(OVER){if(i===0){resetPlay();s0=G;}else go('select');}
+  if(OVER){if(i===0){resetPlay();s0=G;if(CUR==='eye'&&EYEKP){cash=EYEKP[0];RUN.t=EYEKP[1];RUN.hits=EYEKP[2];RUN.kos=EYEKP[3];}}else go('select');}
   else if(WIN){if(i===0)go('select');else{resetPlay();s0=G;}}}
 function endKey(code){const ok=code==='Enter'||code==='Space'||code==='KeyZ';
-  if(OVER){const o=OVER;if(o.t<1.9){if(ok&&o.t>.5)o.t=1.9;return;}if(code==='ArrowUp'||code==='ArrowDown')o.sel^=1;else if(ok)endPick(o.sel);}
+  if(OVER){const o=OVER;if(o.t<(o.rdy||1.9)){if(ok&&o.t>.5)o.t=(o.rdy||1.9);return;}if(code==='ArrowUp'||code==='ArrowDown')o.sel^=1;else if(ok)endPick(o.sel);}
   else if(WIN){const w=WIN;if(w.t<w.end){if(ok&&w.t>.4)w.t=w.end;return;}if(code==='ArrowLeft'||code==='ArrowRight')w.sel^=1;else if(ok)endPick(w.sel);}}
 function endTap(x,y){
-  if(OVER){const o=OVER;if(o.t<1.9){if(o.t>.5)o.t=1.9;return;}if(x>CX-60&&x<CX+60){if(y>=148&&y<166)endPick(0);else if(y>=166&&y<184)endPick(1);}}
+  if(OVER){const o=OVER;if(o.t<(o.rdy||1.9)){if(o.t>.5)o.t=(o.rdy||1.9);return;}if(x>CX-60&&x<CX+60){if(y>=148&&y<166)endPick(0);else if(y>=166&&y<184)endPick(1);}}
   else if(WIN){const w=WIN;if(w.t<w.end){if(w.t>.4)w.t=w.end;return;}if(y>=172&&y<194){if(x>CX-100&&x<CX-4)endPick(0);else if(x>CX+4&&x<CX+100)endPick(1);}}}
 // ================= ACT 1-3 ROOFTOPS: cables, Wire Crawlers, Antenna Brutes and the eye-TV chase =================
 let NEXTLV=null;
@@ -1311,6 +1312,33 @@ function eyeBack(X,Y){const E=EYE,cx=X(LEVEL.ring[0]),cy=Y(LEVEL.ring[1]),R_=LEV
 function eyeHUD(){const E=EYE;if(CUR!=='eye'||!(E.ph==='p1'||E.ph==='p2'||E.ph==='trans'))return;const w=150,x=CX-w/2,y=208,k=Math.max(0,E.hp/E.max);
   T(E.ph==='p1'?'THE EYE  -  FIND THE REAL ONE':'THE EYE',CX,y-3,8,'#ff9be8','center');px(x-1,y-1,w+2,7,'#12020a');px(x,y,w,5,'#3a1030');px(x,y,Math.round(w*k),5,E.ph==='p1'?'#ff5ee8':'#ff4d6d');px(x,y,Math.round(w*k),1,'#ffd0f0');
   px(x+w+4,y,5,5,'#ff5ee8');px(x+w+11,y,5,5,E.ph==='p1'?'#3a1030':'#ff4d6d');}
+// ---- the Eye's own death screen: it watches you lose ----
+const EYE_SAY=['I SAW THAT COMING','YOU BLINKED FIRST','TRY TO SURPRISE ME','I NEVER LOOK AWAY','SHOW ME SOMETHING NEW','LIFA SAYS HELLO'];
+let EYEKP=null,EYE_DEATHS=0;
+function drawEyeOver(o,dt){const t=o.t,a=Math.min(1,t/.35);
+  ctx.fillStyle='rgba(4,1,10,'+(.96*a)+')';ctx.fillRect(0,0,W,H);
+  if(t<.4){for(let i=0;i<260;i++)px(Math.random()*W,Math.random()*H,2,1,Math.random()<.5?'#9fb0ff':'#ffffff');const k=t/.4;px(0,Math.round(112-(1-k)*112),W,1,'#ffffff');px(0,Math.round(112+(1-k)*112),W,1,'#ffffff');return;}
+  if(t<.55){const k=(t-.4)/.15;px(Math.round(CX-(1-k)*CX),112,Math.round((1-k)*W),1,'#ffffff');return;}
+  // small eyes blinking in the dark
+  for(let i=0;i<16;i++){const hx=Math.sin(i*127.1)*43758.5,hy=Math.sin(i*311.7)*43758.5,x=Math.round((hx-Math.floor(hx))*W),y=Math.round((hy-Math.floor(hy))*H),ph=(t*.35+i*.37)%1,op=ph<.5?Math.sin(ph*2*Math.PI):0;
+    if(op<=.05||Math.abs(x-CX)<70&&Math.abs(y-50)<34||(y>84&&y<186&&Math.abs(x-CX)<96))continue;ctx.globalAlpha=.3*op;const eh=Math.max(1,Math.round(3*op));for(let q=-eh;q<=eh;q++){const w=Math.round(7*Math.sqrt(1-q*q/(eh*eh+.01)));px(x-w,y+q,w*2,1,'#f4eeff');}px(x-1,y-1,3,3,'#c0122a');ctx.globalAlpha=1;}
+  // the eye
+  const cy=48,ew=58,bl=(t%3.7)>3.55?1-Math.abs(((t%3.7)-3.625)/.075):0,op=Math.min(1,Math.max(0,(t-.7)/.45))*(1-bl*.92),eh=Math.round(21*op);
+  ctx.globalCompositeOperation='lighter';const g=ctx.createRadialGradient(CX,cy,4,CX,cy,90);g.addColorStop(0,'rgba(255,40,90,'+(.22*op)+')');g.addColorStop(1,'rgba(255,40,90,0)');ctx.fillStyle=g;ctx.fillRect(CX-90,cy-60,180,120);ctx.globalCompositeOperation='source-over';
+  if(eh>0){for(let q=-eh;q<=eh;q++){const w=Math.round(ew*Math.pow(Math.max(0,1-q*q/(eh*eh+.01)),.62));px(CX-w-1,cy+q,w*2+2,1,'#5a0a20');px(CX-w,cy+q,w*2,1,(q+Math.floor(t*30))%4?'#f4eeff':'#e2d6f4');}
+    const rdy=t>=o.rdy,lx=Math.sin(t*.9)*(rdy?5:14),ly=rdy?5+o.sel*3:Math.min(6,(t-1)*4),ir=14;
+    ctx.save();ctx.beginPath();for(let q=-eh;q<=eh;q++){const w=Math.round(ew*Math.pow(Math.max(0,1-q*q/(eh*eh+.01)),.62));ctx.rect(CX-w,cy+q,w*2,1);}ctx.clip();
+    ctx.fillStyle='#7a0a1c';ctx.beginPath();ctx.arc(CX+lx,cy+ly,ir+2,0,7);ctx.fill();ctx.fillStyle='#c0122a';ctx.beginPath();ctx.arc(CX+lx,cy+ly,ir,0,7);ctx.fill();
+    ctx.strokeStyle='#ff5a70';ctx.lineWidth=1;for(let i=0;i<10;i++){const an=i*.628+t*.2;ctx.beginPath();ctx.moveTo(CX+lx+Math.cos(an)*6,cy+ly+Math.sin(an)*6);ctx.lineTo(CX+lx+Math.cos(an)*(ir-1),cy+ly+Math.sin(an)*(ir-1));ctx.stroke();}
+    const pr=5+Math.sin(t*2.3)*1.2;ctx.fillStyle='#08020a';ctx.beginPath();ctx.arc(CX+lx,cy+ly,pr,0,7);ctx.fill();px(Math.round(CX+lx-8),Math.round(cy+ly-9),4,4,'#ffffff');px(Math.round(CX+lx+4),Math.round(cy+ly+4),2,2,'#ffd0d8');ctx.restore();}
+  // it speaks
+  const type=(s,t0,r,y,sz,col)=>{const n=Math.floor((t-t0)*r);if(n<=0)return;const sh=s.slice(0,Math.min(s.length,n)),gl=Math.floor(G*9)%11===0?1:0;if(sz>=14){T(sh,CX+2,y+2,sz,'#3a0418','center');T(sh,CX-1-gl,y,sz,'#2fd8ff','center');}T(sh,CX+gl,y,sz,col,'center');
+    if(n<=s.length&&Math.floor(G*8)%2)px(Math.round(CX+TW(sh)/2+3),y-(sz>=14?12:7),sz>=14?6:3,sz>=14?12:7,col);};
+  FNT(14,'HMM...');type('HMM...',1.3,7,92,14,'#f4eeff');FNT(14,'INTERESTING.');type('INTERESTING.',2.5,13,112,14,'#ff4d6d');FNT(8,o.q);type(o.q,3.7,26,128,8,'#ffb3c1');
+  if(t>4.2){ctx.globalAlpha=Math.min(1,(t-4.2)/.3);T('ATTEMPT '+EYE_DEATHS+'   -   I AM STILL WATCHING',CX,140,8,'#6a4a78','center');ctx.globalAlpha=1;}
+  ctx.globalAlpha=.07;for(let y=Math.floor(G*20)%3;y<H;y+=3)px(0,y,W,1,'#ff2d55');ctx.globalAlpha=1;
+  if(t>=o.rdy){endBtn('LOOK AGAIN',CX-56,150,112,o.sel===0);endBtn('LOOK AWAY',CX-56,168,112,o.sel===1);
+    const p=PR('UP/DOWN  CHOOSE     ENTER  SELECT','[A] SELECT','');if(p)TP(p,CX,204,8,'#6a4a78','center');}}
 // ================= ACT 1-2 STORY: the clerk, the $20 lighter, and the MECHA ENFORCER =================
 // world = source-map px * .78 (the act's art is resampled .65 and drawn at artK 1.2)
 const BW=x=>x*.78;
