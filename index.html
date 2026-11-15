@@ -221,7 +221,11 @@ function go(to){if(trans)return;trans={to,t:0,sw:0};}
 function enterScene(s){s0=G;fx.length=0;paused=false;if(s==='cutscene')cs={i:0,tl:0};if(s==='play'){const kp=NEXTLV?[cash,RUN.t,RUN.hits,RUN.kos,P.hp]:null;if(!NEXTLV&&(LEVELS[lsel]||{}).id==='boss'&&eyeDone()&&!EYE.rematch)NEXTLV='eye';loadLevel(NEXTLV||(LEVELS[lsel]||LEVELS[0]).id);NEXTLV=null;resetPlay();EYEKP=kp;if(kp){EYE_DEATHS=0;cash=kp[0];RUN.t=kp[1];RUN.hits=kp[2];RUN.kos=kp[3];P.hp=Math.max(1,kp[4]);}doSave();}if(s==='title'){menuOpen=false;sel=0;if(titleSkip){titleSkip=false;s0=G-3;menuOpen=true;sel=TSEL;TSEL=2;}}if(s==='select'){SUB.open=0;SUB.ride=0;mapEnter();}if(s==='chill')chillEnter();if(s==='void')voidEnter();
   LIGHT=s==='title'?1:s==='cutscene'?.45:s==='act'?.5:s==='play'?.22:0;}
 const MENU=['NEW GAME','CONTINUE','LEVEL SELECT'];
-function choose(){if(sel===0){lsel=0;afterAct='controls';go('act');}else if(sel===1){if(hasSave())go('play');else msgT=G;}else go('select');}
+let wipeT=-9;
+function hasProgress(){try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('stt_')===0&&!/^stt_(music|shuf|pad)/.test(k))return true;}}catch(e){}return false;}
+function wipeProgress(){try{const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('stt_')===0&&!/^stt_(music|shuf|pad)/.test(k))ks.push(k);}ks.forEach(k=>localStorage.removeItem(k));}catch(e){}
+  SH_OWN=[];SH_ON=null;PERKS={};MREC={};Object.assign(OM,{cur:1,x:MAPN[1].x,y:MAPN[1].y,path:null,queue:[],fresh:new Set()});EYE.seen=0;EYE.rematch=0;EYE_DEATHS=0;EYEKP=null;NEXTLV=null;TRU.m=1;TRU.tog=0;CH.last=0;}
+function choose(){if(sel===0){if(hasProgress()){if(G-wipeT>4){wipeT=G;return;}if(G-wipeT<.5)return;}wipeT=-9;wipeProgress();lsel=0;afterAct='controls';go('act');}else if(sel===1){if(hasSave())go('play');else msgT=G;}else go('select');}
 function confirm(){if(trans)return;
   if(scene==='title'){if(!menuOpen){if(G-s0>2.8)menuOpen=true;else s0=G-2.8;}else choose();}
   else if(paused){if(pview==='controls')pview='menu';else if(pview==='music')muPlayAt(MU.sel);else pauseChoose();}
@@ -236,7 +240,8 @@ function drawTitleSceneOld(){
     else{px(88,166,144,52,'rgba(10,4,32,.92)');px(88,166,144,1,'#ff5ee8');px(88,217,144,1,'#ff5ee8');px(88,166,1,52,'#ff5ee8');px(231,166,1,52,'#ff5ee8');
       MENU.forEach((m,i)=>{const dis=i===1&&!hasSave();T(m,118,182+i*14,8,sel===i?(dis?'#ff8aa0':'#ffe66d'):(dis?'#5a4a7a':'#a49bd6'),'left');});
       const cy=175+sel*14;for(let i=0;i<5;i++)px(102+i,cy-4+i,1,9-i*2,'#ffe66d');
-      if(G-msgT<1.4)T('NO SAVE DATA',CX,160,8,'#ff8aa0','center','#12042c');}
+      if(G-msgT<1.4)T('NO SAVE DATA',CX,160,8,'#ff8aa0','center','#12042c');
+      if(G-wipeT<4&&sel===0){px(40,150,W-80,14,'rgba(10,4,32,.92)');T('ERASES ALL PROGRESS - PRESS AGAIN',CX,160,8,'#ff8aa0','center');}}
   }
   if(ts<.5){ctx.fillStyle='rgba(0,0,0,'+(1-ts/.5)+')';ctx.fillRect(0,0,W,H);}
   if(ts>1.85&&ts<2.25){ctx.fillStyle='rgba(255,255,255,'+(.9*(1-(ts-1.85)/.4))+')';ctx.fillRect(0,0,W,H);}
@@ -2735,6 +2740,7 @@ function frame(now){
   const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;DT=dt;G+=dt;CAMX=0;EOY=0;EALPHA=1;pollPad();document.body.classList.toggle('paused',!!paused&&scene==='play');
   if(scene==='title')drawTitleScene();else if(scene==='act')drawAct();else if(scene==='controls')drawControls();else if(scene==='cutscene')drawCut(dt);else if(scene==='select')drawSelect();else if(scene==='chill')drawChill(dt);else if(scene==='void')drawVoid(dt);else if(paused)drawPause();else drawPlay(dt);
   drawBackBtn();drawPadToast();muToast();
+  if(scene==='title'&&menuOpen&&G-wipeT<4&&!trans){const w=TW('PRESS ENTER AGAIN TO START OVER')+24,b=Math.floor(G*4)%2;px(CX-w/2,104,w,24,'rgba(10,4,32,.95)');px(CX-w/2,104,w,1,'#ff4d6d');px(CX-w/2,127,w,1,'#ff4d6d');T('THIS ERASES ALL PROGRESS',CX,114,8,'#ff8aa0','center');T(PR('PRESS ENTER AGAIN TO START OVER','PRESS A AGAIN TO START OVER','TAP NEW GAME AGAIN'),CX,124,8,b?'#ffffff':'#d9d3f0','center');}
   if(trans){trans.t+=dt;if(!trans.sw&&trans.t>=.4){trans.sw=1;scene=trans.to;enterScene(scene);}const a=trans.t<.4?trans.t/.4:Math.max(0,1-(trans.t-.4)/.4);
     ctx.fillStyle='rgba(4,4,26,'+a+')';ctx.fillRect(0,0,W,H);if(trans.t>=.8)trans=null;}
   for(const k in hit)delete hit[k];requestAnimationFrame(frame);
