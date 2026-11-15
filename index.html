@@ -2133,7 +2133,7 @@ const MIKE_INTRO_GONE=[['O','mike?!?'],['M','yoyoo'],['O','since when you work a
 const MIKE_LIFA=[['M','yo where lifa at? he aint come thru for a light tonight'],['O','a tv took him'],['M','...a what slim'],['O','a tv. with a eye. opened a portal right there'],
  ['M','bro how much did yall smoke'],['O','we didnt even get to spark it mike'],['M','damn. thats the real tragedy'],['O','im getting him back'],['M','then stock up. take a look']];
 const MIKE_LIFA_K='stt_mike_lifa';
-const MIKE_EYE=[['M','yo you look like you seen a ghost'],['O','worse. a eyeball'],['M','...a what slim'],['O','giant eyeball. lives in the radio tower. had like fifty tvs'],['M','and you fought it'],
+const MIKE_EYE=[['M','yo you look like you seen a ghost'],['O','worse. a eyeball'],['M','...you just be chatting bruh'],['O','giant eyeball. lives in the radio tower. had like fifty tvs'],['M','and you fought it'],
  ['O','beat it. it ran in a portal. lifa in there, i seen him on the screens'],['M','so a tv eyeball got my best customer in tv jail'],['O','basically'],['M','aight. new shirt tho? that joint hard'],['O','fell out the portal'],
  ['M','free merch from another dimension. love that for you'],['M','stock up before you go in there. take a look']];
 function chillTalkNext(){const T_=CH.talk,L=T_.lines[T_.i];if(T_.t*38<L[1].length){T_.t=L[1].length/38;return;}T_.i++;T_.t=0;if(T_.i>=T_.lines.length){CH.talk=null;CH.ui=null;if(T_.then==='portal'){portalStart();return;}if(T_.then==='shop'){try{localStorage.setItem(MIKE_K,'1');}catch(e){}chillAct('shop');}}}
