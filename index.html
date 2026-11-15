@@ -218,7 +218,7 @@ const keys={},hit={};let G=0,scene='title',s0=0,trans=null,menuOpen=false,sel=0,
 const hasSave=()=>{try{return localStorage.getItem('stt_save')==='1';}catch(e){return false;}};
 const doSave=()=>{try{localStorage.setItem('stt_save','1');}catch(e){}};
 function go(to){if(trans)return;trans={to,t:0,sw:0};}
-function enterScene(s){s0=G;fx.length=0;paused=false;if(s==='cutscene')cs={i:0,tl:0};if(s==='play'){const kp=NEXTLV?[cash,RUN.t,RUN.hits,RUN.kos,P.hp]:null;if(!NEXTLV&&(LEVELS[lsel]||{}).id==='boss'&&eyeDone()&&!EYE.rematch)NEXTLV='eye';loadLevel(NEXTLV||(LEVELS[lsel]||LEVELS[0]).id);NEXTLV=null;resetPlay();EYEKP=kp;if(kp){EYE_DEATHS=0;cash=kp[0];RUN.t=kp[1];RUN.hits=kp[2];RUN.kos=kp[3];P.hp=Math.max(1,kp[4]);}doSave();}if(s==='title'){menuOpen=false;sel=0;if(titleSkip){titleSkip=false;s0=G-3;menuOpen=true;sel=TSEL;TSEL=2;}}if(s==='select')mapEnter();if(s==='chill')chillEnter();if(s==='void')voidEnter();
+function enterScene(s){s0=G;fx.length=0;paused=false;if(s==='cutscene')cs={i:0,tl:0};if(s==='play'){const kp=NEXTLV?[cash,RUN.t,RUN.hits,RUN.kos,P.hp]:null;if(!NEXTLV&&(LEVELS[lsel]||{}).id==='boss'&&eyeDone()&&!EYE.rematch)NEXTLV='eye';loadLevel(NEXTLV||(LEVELS[lsel]||LEVELS[0]).id);NEXTLV=null;resetPlay();EYEKP=kp;if(kp){EYE_DEATHS=0;cash=kp[0];RUN.t=kp[1];RUN.hits=kp[2];RUN.kos=kp[3];P.hp=Math.max(1,kp[4]);}doSave();}if(s==='title'){menuOpen=false;sel=0;if(titleSkip){titleSkip=false;s0=G-3;menuOpen=true;sel=TSEL;TSEL=2;}}if(s==='select'){SUB.open=0;SUB.ride=0;mapEnter();}if(s==='chill')chillEnter();if(s==='void')voidEnter();
   LIGHT=s==='title'?1:s==='cutscene'?.45:s==='act'?.5:s==='play'?.22:0;}
 const MENU=['NEW GAME','CONTINUE','LEVEL SELECT'];
 function choose(){if(sel===0){lsel=0;afterAct='controls';go('act');}else if(sel===1){if(hasSave())go('play');else msgT=G;}else go('select');}
@@ -1827,13 +1827,33 @@ function mapUpdate(dt){if(!OM.path)return;let left=74*dt;
     if(d<=left){OM.x=tx;OM.y=ty;left-=d;OM.ph+=d*2/32;OM.seg++;
       if(OM.seg>=OM.path.length-1){OM.cur=OM.tgt;OM.path=null;if(OM.queue.length)mapWalk(OM.queue);}}
     else{OM.x+=dx/d*left;OM.y+=dy/d*left;OM.ph+=left*2/32;left=0;}}}
-function selectChoose(){if(OM.path)return;const n=MAPN[OM.cur];
+// ---- SUBWAY: fast travel now, and the line into Act 2 once it exists ----
+const SUB={open:0,sel:0,ride:0,dest:null};
+function subDests(){const done=eyeDone();return [{l:'CHILL SPOT',ok:true,go:()=>go('chill')},
+  {l:'EYE TOWER - CONTROL ROOM',ok:done,lock:'BEAT THE EYE FIRST',go:()=>{lsel=LEVELS.findIndex(L=>L.id==='boss');afterAct='play';go('play');}},
+  {l:done?'THE BROADCAST - ACT 2':'? ? ?',ok:false,lock:done?'NO TRAINS RUNNING... YET':'END OF THE LINE'}];}
+function subPick(){if(SUB.ride)return;const d=subDests()[SUB.sel];if(!d.ok){mapMsg(d.lock);rumble(.2,.2,80);return;}SUB.ride=.001;SUB.dest=d;rumble(.5,.8,900);}
+function subTap(x,y){if(SUB.ride)return;const i=Math.floor((y-96)/16);if(x>58&&x<262&&i>=0&&i<3&&y>=96){SUB.sel=i;subPick();}else if(x<50||x>270||y<60||y>160)SUB.open=0;}
+function subDraw(dt){if(!SUB.open)return;const x=50,y=62,w=220,h=98,D=subDests();
+  if(SUB.ride){SUB.ride+=dt;const t=SUB.ride;ctx.fillStyle='rgba(4,2,12,'+Math.min(1,t/.25)+')';ctx.fillRect(0,0,W,H);
+    for(let i=0;i<9;i++){const lx=W-((t*520+i*60)%(W+80));px(lx,30,3,H-60,'#12102a');px(lx+1,30,1,H-60,'#2a2850');}px(0,150,W,2,'#3a3460');px(0,156,W,1,'#2a2850');
+    const tx=W+40-t*560;for(let c=0;c<5;c++){const cx=tx+c*92;prr(cx,96,88,52,6,'#1a2a4a');px(cx+2,98,84,2,'#6fb0ff');px(cx,128,88,3,'#0a84ff');for(let q=0;q<4;q++)prr(cx+7+q*20,106,15,16,2,(c+q+Math.floor(t*8))%7?'#ffe6a0':'#fff8d8');px(cx+10,148,10,3,'#0a0818');px(cx+66,148,10,3,'#0a0818');}
+    ctx.globalAlpha=.25;for(let i=0;i<14;i++)px(Math.random()*W,90+Math.random()*64,20+Math.random()*40,1,'#ffffff');ctx.globalAlpha=1;shakeT=Math.max(shakeT,.05);
+    if(t>1.25&&SUB.dest){const d=SUB.dest;SUB.dest=null;d.go();}if(t>2.2){SUB.ride=0;SUB.open=0;}return;}
+  ctx.fillStyle='rgba(4,2,14,.55)';ctx.fillRect(0,0,W,H);prr(x-1,y-1,w+2,h+2,7,'#0a84ff');prr(x,y,w,h,6,'#0a0a22');px(x+6,y+24,w-12,1,'#0a84ff');
+  ctx.fillStyle='#0a84ff';ctx.beginPath();ctx.arc(x+18,y+13,8,0,7);ctx.fill();T('M',x+18,y+17,8,'#ffffff','center');T('SUBWAY',x+32,y+17,8,'#ffffff','left');T('WHERE TO?',x+w-8,y+17,8,'#6fb0ff','right');
+  D.forEach((d,i)=>{const ry=y+34+i*16,on=i===SUB.sel;if(on){px(x+8,ry-3,w-16,14,d.ok?'rgba(10,132,255,.28)':'rgba(255,255,255,.07)');px(x+8,ry-3,2,14,d.ok?'#6fb0ff':'#6a5a98');}
+    ctx.fillStyle=d.ok?'#9dffa0':'#5a4a68';ctx.beginPath();ctx.arc(x+20,ry+4,3,0,7);ctx.fill();if(i<2)px(x+19,ry+8,2,8,'#3a3460');
+    if(!d.ok&&on)T(d.lock,x+30,ry+7,8,'#ff8aa0','left');else T(d.l,x+30,ry+7,8,d.ok?(on?'#ffffff':'#d9d3f0'):'#6a5a98','left');});
+  const p=PR('ENTER  RIDE        ESC  CLOSE','A  RIDE        B  CLOSE','TAP A STOP');T(p.replace(/\[|\]/g,''),CX,y+h-5,8,'#6a70a8','center');}
+function selectChoose(){if(SUB.open){subPick();return;}if(OM.path)return;const n=MAPN[OM.cur];
+  if(n.kind==='warp'&&mOpen(OM.cur)){SUB.open=1;SUB.sel=0;SUB.ride=0;return;}
   if(n.kind==='home'){selectBack();return;}
   if(mPlayable(OM.cur)){lsel=n.lv;afterAct='play';go('act');return;}
   if(n.kind==='bonus'&&mOpen(OM.cur)){go('chill');return;}
   mapMsg(n.name+' - COMING SOON');}
-function selectBack(){titleSkip=true;go('title');}
-function mapTap(x,y){
+function selectBack(){if(SUB.open){if(!SUB.ride)SUB.open=0;return;}titleSkip=true;go('title');}
+function mapTap(x,y){if(SUB.open){subTap(x,y);return;}
   if(y<20&&x>=MBTN.play-2){if(x<MBTN.back-1)selectChoose();else selectBack();return;}
   let best=-1,bd=16;MAPN.forEach((n,i)=>{const d=Math.hypot(n.x-x,(n.y-y)*1.4);if(d<bd){bd=d;best=i;}});
   if(best<0)return;if(best===OM.cur&&!OM.path){selectChoose();return;}if(OM.path)return;
@@ -1976,6 +1996,7 @@ function drawSelect(){
   mapHUD(n,rec);
   if(G-OM.msgT<1.6){const w=OM.msg.length*4+12;prr(CX-w/2,211,w,11,4,'rgba(10,4,32,.94)');px(CX-w/2+3,211,w-6,1,'#ff8aa0');tiny(OM.msg,CX,214,'#ff8aa0','center');}
   else{const tip=PR('ARROWS: WALK · ENTER: PLAY','STICK: WALK · A: PLAY · B: BACK','');if(tip){const w=tip.length*4+10;prr(CX-w/2,212,w,10,4,'rgba(10,4,32,.75)');tiny(tip,CX,214.5,'#a49bd6','center');}}
+  subDraw(dt);
   if(ts<.4){ctx.fillStyle='rgba(4,4,26,'+(1-ts/.4)+')';ctx.fillRect(0,0,W,H);}
 }
 // ================= PAUSE =================
@@ -2699,6 +2720,7 @@ function keyDown(code){if(!keys[code])hit[code]=1;keys[code]=1;
   if((code==='Escape'||code==='KeyP')&&scene==='play'&&!trans){if(paused){if(pview==='controls')pview='menu';else setPause(false);}else if(!won)setPause(true);return;}
   if(code==='Enter')confirm();
   if(paused&&pview==='menu'&&!trans){if(code==='ArrowUp')psel=(psel+PMENU.length-1)%PMENU.length;if(code==='ArrowDown')psel=(psel+1)%PMENU.length;if(code==='ArrowRight')muSkip(1);if(code==='ArrowLeft')muSkip(-1);}
+  if(scene==='select'&&!trans&&SUB.open){if(!SUB.ride){if(code==='ArrowUp')SUB.sel=(SUB.sel+2)%3;if(code==='ArrowDown')SUB.sel=(SUB.sel+1)%3;if(code==='Escape'||code==='Backspace')SUB.open=0;}return;}
   if(scene==='select'&&!trans){const d={ArrowLeft:'L',ArrowRight:'R',ArrowUp:'U',ArrowDown:'D'}[code];if(d)mapGo(d);if(code==='Escape'||code==='Backspace')selectBack();}
   if(scene==='title'&&menuOpen&&!trans){if(code==='ArrowUp')sel=(sel+MENU.length-1)%MENU.length;if(code==='ArrowDown')sel=(sel+1)%MENU.length;if(code==='Escape')menuOpen=false;}}
 function keyUp(code){keys[code]=0;}
