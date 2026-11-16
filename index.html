@@ -1466,8 +1466,25 @@ const CRIB_FR=[
   lifa:[['F','where my brother at'],['O','z...'],['F','he aint answer his phone. he always answer for me'],['O','a tv took him. with a eye. opened a portal at the smoke spot'],['F','...'],
         ['F','you was right there?'],['O','it got me too. i got out. he didnt'],['F','then you going back in'],['O','thats the plan'],['F','good. bring my lil brother home onyx'],['F','im not asking']],
   lifaChat:[[['F','you still here? go get him']],[['F','he scared of the dark. dont tell him i said that']],[['F','every hour he gone is on you. i mean that with love']]]}];
+// ---- Jaynu and Tana go back and forth on their own while Onyx is in the living room
+const CRIB_BANTER=[
+ [['jaynu','you been in that chair a hour'],['tana','its my chair now'],['jaynu','it was never your chair'],['tana','say that to the chair']],
+ [['tana','bet you cant beat me in anything on that tv'],['jaynu','i dont play with children'],['tana','so you scared'],['jaynu','...pass the controller']],
+ [['jaynu','who ate the last of the snacks'],['tana','why you looking at me'],['jaynu','you got crumbs on your shirt'],['tana','those are old crumbs']],
+ [['tana','your hair look like it lost a fight'],['jaynu','yours look like the thing it fought'],['tana','...ok that was good']],
+ [['jaynu','onyx really live like this huh'],['tana','purple lights in every room'],['jaynu','man think he a villain'],['tana','he might be']],
+ [['tana','you ever gonna pay me back'],['jaynu','for what'],['tana','for everything'],['jaynu','put it on my tab']]];
+const CBT={set:0,i:0,t:-3};
+function cribBanter(dt){const C=LEVEL.crib,inRoom=Math.abs(P.y-C.gy*TS)<3&&P.x>330*.78&&P.x<900*.78;if(!inRoom||CRIB.talk||CRIB.look){if(CBT.t>0){CBT.t=-1.5;CBT.i=0;}return null;}
+  CBT.t+=dt;if(CBT.t<0)return null;const ex=CRIB_BANTER[CBT.set%CRIB_BANTER.length],L=ex[CBT.i],dur=1.5+L[1].length*.055;
+  if(CBT.t>dur){CBT.t=0;CBT.i++;if(CBT.i>=ex.length){CBT.i=0;CBT.set++;CBT.t=-4.5;}return null;}return L;}
+function cribBubble(L){const f=CRIB_FR.find(q=>q.id===L[0]),Z=LEVEL.zoom||1,sx=Math.round((f.x*.78-camX)*Z),sy=Math.round((LEVEL.crib.gy*TS-86-camY)*Z),txt=L[1].toUpperCase(),n=Math.min(txt.length,Math.floor(CBT.t*34));
+  const lines=wrap(txt,22),w=Math.max(...lines.map(l=>TW(l)))+10,h=lines.length*10+7,x=Math.max(4,Math.min(W-w-4,sx-Math.round(w/2))),y=Math.max(22,sy-h-6);
+  px(x,y,w,h,'rgba(10,4,32,.93)');px(x,y,w,1,f.col);px(x,y+h-1,w,1,f.col);px(x,y,1,h,f.col);px(x+w-1,y,1,h,f.col);px(sx-2,y+h,5,2,f.col);px(sx-1,y+h+2,3,2,f.col);
+  let left=n;lines.forEach((l,i)=>{const sh=l.slice(0,Math.max(0,left));left-=l.length+1;if(sh){ctx.font=FNT(8,'x y');ctx.textAlign='left';ctx.fillStyle='#f4eeff';ctx.fillText(sh,x+5,y+11+i*10);}});}
 function cribMet(id){try{return localStorage.getItem('stt_met_'+id)==='1';}catch(e){return false;}}
 function cribUpdate(dt){if(!cribOn())return;const C=LEVEL.crib,K=.78,gy=C.gy*TS,uy=C.uy*TS,up=Math.abs(P.y-uy)<3,dn=Math.abs(P.y-gy)<3;
+  CRIB.say=cribBanter(dt);
   if(CRIB.look){CRIB.lt+=dt;return;}if(CRIB.talk){CRIB.talk.t+=dt;return;}
   if(CRIB.tw){const w=CRIB.tw;w.t+=dt;const k=Math.min(1,w.t/w.d);P.x=w.x0+(w.x1-w.x0)*k;P.y=w.y0+(w.y1-w.y0)*k;P.vx=0;P.vy=0;P.air=false;P.gy=P.y;P.t+=dt;P.face=w.x1>w.x0?1:-1;if(k>=1){CRIB.tw=null;setSt('idle');}return;}
   CRIB.near=null;if(P.air||P.st==='hurt')return;
@@ -1485,8 +1502,8 @@ function cribUpdate(dt){if(!cribOn())return;const C=LEVEL.crib,K=.78,gy=C.gy*TS,
     CRIB.talk={f,lines,i:0,t:0};P.vx=0;P.face=f.x*K>P.x?1:-1;if(P.st!=='idle')setSt('idle');}
   else{CRIB.look=n.it;CRIB.lt=0;P.vx=0;if(P.st!=='idle')setSt('idle');}}
 function cribBack(){if(!cribOn())return;const K=.78;
-  for(const f of CRIB_FR){const im=IMG['cf_'+f.id];if(!im||!im.width)continue;const fy=(f.up?LEVEL.crib.uy:LEVEL.crib.gy)*TS,x=Math.round(f.x*K-camX),y=Math.round(fy-camY),k=Math.floor(G*7+f.x)%f.n,tk=CRIB.talk&&CRIB.talk.f===f,fc=tk?(P.x>f.x*K?1:-1):f.face;
-    ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-16,y-2,32,3);ctx.save();ctx.translate(x,y);if(fc<0)ctx.scale(-1,1);ctx.drawImage(im,k*f.cw,0,f.cw,100,-Math.round(f.cw/2),-99,f.cw,100);ctx.restore();
+  for(const f of CRIB_FR){const im=IMG['cf_'+f.id];if(!im||!im.width)continue;const fy=(f.up?LEVEL.crib.uy:LEVEL.crib.gy)*TS,x=Math.round(f.x*K-camX),y=Math.round(fy-camY),k=Math.floor(G*7+f.x)%f.n,tk=CRIB.talk&&CRIB.talk.f===f,fc=tk?(P.x>f.x*K?1:-1):f.face,jig=CRIB.say&&CRIB.say[0]===f.id?Math.round(Math.abs(Math.sin(G*14))*-1):0;
+    ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(x-16,y-2,32,3);ctx.save();ctx.translate(x,y+jig);if(fc<0)ctx.scale(-1,1);ctx.drawImage(im,k*f.cw,0,f.cw,100,-Math.round(f.cw/2),-99,f.cw,100);ctx.restore();
     if(CRIB.near&&CRIB.near.f===f&&!CRIB.talk){const b=Math.round(Math.sin(G*5)*2);px(x-1,y-112+b,3,5,'#ffe66d');px(x-1,y-105+b,3,2,'#ffe66d');}}for(const it of LEVEL.crib.items){const im=IMG['ci_'+it.id+'_s'];if(!im||!im.width)continue;const x=Math.round(it.x*K-camX-im.width/2),y=Math.round(it.y*K-camY-im.height);ctx.drawImage(im,x,y);
     if(CRIB.near&&CRIB.near.it===it&&!CRIB.look){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.25+.15*Math.sin(G*6);ctx.drawImage(im,x,y);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
     if(Math.sin(G*2+it.x)>.92)px(x+im.width-3,y+2,1,1,'#ffffff');}}
@@ -1499,6 +1516,7 @@ function cribHUD(){if(!cribOn())return;
     if(im&&im.width){const s=.85+.15*a,w=im.width*s,h=im.height*s;ctx.drawImage(im,Math.round(CX-w/2),Math.round(104-h/2+Math.sin(G*2)*2),Math.round(w),Math.round(h));}
     px(40,166,W-80,1,'#ff5ee8');T(it.name,CX,180,8,'#ffffff','center');if(it.line&&CRIB.lt>.9){const n=Math.floor((CRIB.lt-.9)*16);T('ONYX:  '+it.line.slice(0,n),CX,193,8,'#ffb3e8','center');}
     if(CRIB.lt>(CRIB.look.line?.9+CRIB.look.line.length/16+.3:.5)&&Math.floor(G*2)%2){const p=PR('PRESS ENTER','PRESS [A]','TAP');TP(p,CX,208,8,'#a49bd6','center');}return;}
+  if(CRIB.say)cribBubble(CRIB.say);
   const n=CRIB.near;if(!n||CRIB.tw)return;const lab={up:PR('UP: GO UPSTAIRS','[LS] UP: UPSTAIRS','PAD UP: UPSTAIRS'),down:PR('DOWN: GO DOWNSTAIRS','[LS] DOWN: DOWNSTAIRS','PAD DOWN: DOWNSTAIRS'),door:PR('UP: LEAVE','[LS] UP: LEAVE','PAD UP: LEAVE'),look:PR('UP: LOOK','[LS] UP: LOOK','PAD UP: LOOK'),talk:PR('UP: TALK','[LS] UP: TALK','PAD UP: TALK')}[n.k];
   const w=tpW(lab)+12,b=Math.round(Math.sin(G*4)*1.5);px(CX-w/2,186+b,w,13,'rgba(10,4,32,.9)');px(CX-w/2,186+b,w,1,'#ff9be8');px(CX-w/2,198+b,w,1,'#ff9be8');TP(lab,CX,196+b,8,'#ff9be8','center');}
 // ================= ACT 1-2 STORY: the clerk, the $20 lighter, and the MECHA ENFORCER =================
