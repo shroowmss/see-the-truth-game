@@ -1360,6 +1360,8 @@ function aerHits(){const m=AERM[P.st];if(!m)return;const u=P.t*m.fps;
       const rx=(o.x-P.x)*P.face,ry=foeY(o)-P.y;if(rx>w.box[0]-7&&rx<w.box[1]+7&&ry>w.box[2]-7&&ry<w.box[3]+7){P.hitset.add(key);P.airHits=(P.airHits||0)+1;if(P.airHits<7)P.stall=.16;hitOrb(o,w);}}});}
 /*AEREND*/
 
+
+
 /*SFX*/
 // ================= SOUND EFFECTS (made in code with Web Audio, no files) + SETTINGS =================
 var SET=(()=>{const d={mus:6,sfx:8,shake:1,rumble:1};try{return Object.assign(d,JSON.parse(localStorage.getItem('stt_set')||'{}'));}catch(e){return d;}})();
@@ -1394,13 +1396,41 @@ const SND={
     g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(.16*v,t+.03);g.gain.setValueAtTime(.16*v,t+len-.08);g.gain.exponentialRampToValueAtTime(0.0001,t+len);f.connect(g);g.connect(d);
     for(const fr of [220,277,330]){const o=ac.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(fr,t);o.frequency.linearRampToValueAtTime(fr*1.02,t+len);o.connect(f);o.start(t);o.stop(t+len+.02);}
     sNoise(ac,d,t,{ft:'highpass',f0:3000,dur:len,vol:.06*v});}};
+
+// a sine with vibrato (an LFO wobbling its pitch) and a slow swell: the shimmer for force fields and the long sleeve
+function sWarble(ac,dst,t,o){const os=ac.createOscillator(),lfo=ac.createOscillator(),lg=ac.createGain(),g=ac.createGain();os.type=o.type||'sine';os.frequency.setValueAtTime(o.f0,t);if(o.f1)os.frequency.exponentialRampToValueAtTime(o.f1,t+o.dur);
+  lfo.frequency.value=o.rate||7;lg.gain.value=o.depth||o.f0*.03;lfo.connect(lg);lg.connect(os.frequency);
+  const a=o.att||.02;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(o.vol||.2,t+a);if(o.cut){g.gain.setValueAtTime(o.vol||.2,t+o.dur-.01);g.gain.linearRampToValueAtTime(0.0001,t+o.dur);}else g.gain.exponentialRampToValueAtTime(0.0001,t+o.dur);
+  if(o.pan!=null&&ac.createStereoPanner){const p=ac.createStereoPanner();p.pan.value=o.pan;os.connect(g);g.connect(p);p.connect(dst);}else{os.connect(g);g.connect(dst);}
+  os.start(t);lfo.start(t);os.stop(t+o.dur+.03);lfo.stop(t+o.dur+.03);}
+// a reversed swell: sound that sucks in, getting louder, then cuts dead (like tape played backwards)
+function sSuck(ac,dst,t,o){const s=ac.createBufferSource();s.buffer=SFX.nb||sfxNoise(ac);s.loop=true;const f=ac.createBiquadFilter();f.type='bandpass';f.Q.value=o.q||3;f.frequency.setValueAtTime(o.f0,t);f.frequency.exponentialRampToValueAtTime(o.f1,t+o.dur);
+  const g=ac.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(o.vol||.4,t+o.dur*.97);g.gain.linearRampToValueAtTime(0.0001,t+o.dur);s.connect(f);f.connect(g);g.connect(dst);s.start(t);s.stop(t+o.dur+.02);}
+Object.assign(SND,{
+  // diamond shield: a shimmering force field
+  block:(ac,d,t,v)=>{sTone(ac,d,t,{f0:2200,f1:900,dur:.06,vol:.25*v});
+    [523,659,784,1047,1319].forEach((f,i)=>sWarble(ac,d,t+i*.035,{f0:f,dur:.55-i*.05,vol:.07*v,rate:9+i*2,depth:f*.025,att:.01,pan:(i%2?.5:-.5)}));
+    sWarble(ac,d,t,{f0:110,f1:90,dur:.5,vol:.18*v,rate:5,depth:8,type:'triangle'});sNoise(ac,d,t,{f0:6000,f1:9000,q:6,dur:.35,vol:.08*v});},
+  shieldbreak:(ac,d,t,v)=>{sNoise(ac,d,t,{f0:5000,f1:800,q:2,dur:.35,vol:.4*v});[1568,1319,1047,784,587,440].forEach((f,i)=>sWarble(ac,d,t+i*.04,{f0:f,f1:f*.7,dur:.3,vol:.08*v,rate:14,depth:f*.05}));
+    sTone(ac,d,t,{f0:160,f1:40,dur:.4,vol:.5*v});},
+  shieldup:(ac,d,t,v)=>{[392,523,659,880].forEach((f,i)=>sWarble(ac,d,t+i*.06,{f0:f,dur:.45,vol:.07*v,rate:8,depth:f*.02,att:.03,pan:(i%2?.4:-.4)}));sNoise(ac,d,t,{f0:3000,f1:9000,q:4,dur:.3,vol:.06*v});},
+  // the long sleeve: time bends. A reversed suck-in, a deep warping drone and a hollow ring, the world going wrong for a second
+  sighton:(ac,d,t,v)=>{sSuck(ac,d,t,{f0:300,f1:2400,dur:.38,vol:.32*v});sWarble(ac,d,t,{f0:55,f1:110,dur:.38,vol:.3*v,rate:3,depth:6,type:'sawtooth',cut:1});
+    sWarble(ac,d,t+.38,{f0:880,f1:440,dur:.9,vol:.09*v,rate:4.5,depth:30,att:.01,pan:-.6});sWarble(ac,d,t+.38,{f0:1318,f1:660,dur:.9,vol:.06*v,rate:5.5,depth:40,att:.01,pan:.6});
+    sTone(ac,d,t+.38,{f0:90,f1:45,dur:.6,vol:.5*v});},
+  sightoff:(ac,d,t,v)=>{sWarble(ac,d,t,{f0:660,f1:80,dur:.32,vol:.12*v,rate:9,depth:20,type:'triangle'});sSuck(ac,d,t,{f0:2200,f1:200,dur:.2,vol:.18*v});},
+  phase:(ac,d,t,v)=>{sSuck(ac,d,t,{f0:2600,f1:400,dur:.16,vol:.35*v,q:2});sWarble(ac,d,t,{f0:220,f1:55,dur:.32,vol:.28*v,rate:12,depth:30,type:'sawtooth'});sWarble(ac,d,t+.05,{f0:1760,f1:880,dur:.35,vol:.06*v,rate:6,depth:60});},
+  sdash:(ac,d,t,v)=>{sSuck(ac,d,t,{f0:200,f1:3000,dur:.12,vol:.3*v,q:1.5});sWarble(ac,d,t+.12,{f0:140,f1:60,dur:.28,vol:.25*v,rate:16,depth:25,type:'sawtooth'});sNoise(ac,d,t+.12,{f0:3500,f1:600,q:2,dur:.22,vol:.14*v});}});
+{const _s=truStep;truStep=function(){const w=TRU.on;_s();if(!w&&TRU.on)sfx('sighton');else if(w&&!TRU.on)sfx('sightoff');};}
+{const _s=startDash;startDash=function(d){_s(d);if(WEAR('onyx'))sfx('sdash');else sfx('swing',1.3);};}
+{const _s=diaUpdate;diaUpdate=function(dt){const s0=P.sh;_s(dt);if(!s0&&P.sh&&WEAR('diamond'))sfx('shieldup');};}
 function sfx(n,v,len){if(!SET||!SET.sfx||!SND[n])return;const ac=SFX.ac;if(!ac||ac.state!=='running')return;const now=ac.currentTime;if(now-(SFX.last[n]||0)<.035)return;SFX.last[n]=now;
   SFX.out.gain.value=Math.pow(SET.sfx/10,1.6)*.9;try{SND[n](ac,SFX.out,now+.005,v||1,len);}catch(e){}}
 // hook the sounds into the fight
 {const _h=hitOrb;hitOrb=function(o,w){const hp0=o.hp,launch=w.ky!=null&&w.ky<=-150&&typeof canJug==='function'&&canJug(o)&&!o.jug;
   sfx(launch?'launch':(w.fin||w.heavy||w.spike)?'heavy':(w.dmg||1)>=2?'hit':'jab');_h(o,w);
   if((hp0==null||hp0>0)&&o.hp<=0&&o.hp>-900)sfx(['wnoise','wbrute','cbars','ctank','eyetv','bigeye'].includes(o.skin)?'kotv':'ko');};}
-{const _h=hurtBy;hurtBy=function(o){const hp0=P.hp,sh=P.sh,ph=TRU.phT;const r=_h(o);if(P.hp<hp0)sfx('hurt');else if(TRU.phT!==ph)sfx('phase');else if(sh&&!P.sh)sfx('block');return r;};}
+{const _h=hurtBy;hurtBy=function(o){const hp0=P.hp,sh=P.sh,ph=TRU.phT;const r=_h(o);if(P.hp<hp0)sfx('hurt');else if(TRU.phT!==ph)sfx('phase');else if(sh&&!P.sh)sfx(o&&o.brk?'shieldbreak':'block');return r;};}
 {const _s=startAtk;startAtk=function(d){_s(d);sfx('swing');};}
 {const _s=startUpc;startUpc=function(a){_s(a);sfx('swing',1.4);};}
 {const _s=aerStart;aerStart=function(s){_s(s);sfx('swing',1.2);};}
