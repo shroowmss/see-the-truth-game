@@ -1366,6 +1366,12 @@ function aerHits(){const m=AERM[P.st];if(!m)return;const u=P.t*m.fps;
 
 
 
+
+
+
+
+
+
 /*SFX*/
 // ================= SOUND EFFECTS (made in code with Web Audio, no files) + SETTINGS =================
 var SET=(()=>{const d={mus:6,sfx:8,shake:1,rumble:1};try{return Object.assign(d,JSON.parse(localStorage.getItem('stt_set')||'{}'));}catch(e){return d;}})();
@@ -1461,7 +1467,13 @@ function sfx(n,v,len){if(!SET||!SET.sfx||(!SND[n]&&!SMP.map[n]))return;const ac=
   sfx(n||((w.fin||w.heavy)?'heavy':(w.dmg||1)>=2?'hit':'jab'));_h(o,w);
   if((hp0==null||hp0>0)&&o.hp<=0&&o.hp>-900)sfx(['wnoise','wbrute','cbars','ctank','eyetv','bigeye'].includes(o.skin)?'kotv':'ko');};}
 {const _h=hurtBy;hurtBy=function(o){const hp0=P.hp,sh=P.sh,ph=TRU.phT;const r=_h(o);if(P.hp<hp0)sfx('hurt');else if(TRU.phT!==ph)sfx('phase');else if(sh&&!P.sh)sfx(o&&o.brk?'shieldbreak':'block');return r;};}
-{const _s=startAtk;startAtk=function(d){_s(d);sfx('swing');};}
+
+// a punch that misses still plays its own sound, just quieter, at the moment it would have landed
+{const _a=atkHits;atkHits=function(){_a();if(P.st!=='atk'){P._wsMv=null;return;}const m=MOVES[P.mv];if(!m)return;
+  if(P._wsMv!==P.mv||P.t<(P._wsT||0)){P._wsMv=P.mv;P._ws=new Set();sfx('swing');}P._wsT=P.t;
+  const u=P.t*30;m.hits.forEach((w,wi)=>{if(u<w.a+1||P._ws.has(wi))return;P._ws.add(wi);let hit=false;if(P.hitset)for(const k of P.hitset)if(String(k).indexOf(wi+':')===0)hit=true;
+    if(!hit){const n={jab:'pJab',cross:'pCross',fin:'pFin',upper:'pUpper',spin:w.away?'pSpin1':'pSpin2',dash:'pDash'}[P.mv];if(n)sfx(n,.4);}});};}
+
 {const _s=startUpc;startUpc=function(a){_s(a);sfx('swing',1.4);};}
 {const _s=aerStart;aerStart=function(s){_s(s);sfx('swing',1.2);};}
 {const _s=aerLand;aerLand=function(){_s();sfx('slam');};}
