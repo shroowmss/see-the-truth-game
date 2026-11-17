@@ -1362,6 +1362,8 @@ function aerHits(){const m=AERM[P.st];if(!m)return;const u=P.t*m.fps;
 
 
 
+
+
 /*SFX*/
 // ================= SOUND EFFECTS (made in code with Web Audio, no files) + SETTINGS =================
 var SET=(()=>{const d={mus:6,sfx:8,shake:1,rumble:1};try{return Object.assign(d,JSON.parse(localStorage.getItem('stt_set')||'{}'));}catch(e){return d;}})();
@@ -1424,11 +1426,30 @@ Object.assign(SND,{
 {const _s=truStep;truStep=function(){const w=TRU.on;_s();if(!w&&TRU.on)sfx('sighton');else if(w&&!TRU.on)sfx('sightoff');};}
 {const _s=startDash;startDash=function(d){_s(d);if(WEAR('onyx'))sfx('sdash');else sfx('swing',1.3);};}
 {const _s=diaUpdate;diaUpdate=function(dt){const s0=P.sh;_s(dt);if(!s0&&P.sh&&WEAR('diamond'))sfx('shieldup');};}
+
+// ---- one sound per move. SFX.p is a small random pitch shift so the same punch never sounds identical twice
+const pp=f=>f*(SFX.p||1);
+Object.assign(SND,{
+  pJab:(ac,d,t,v)=>{sNoise(ac,d,t,{f0:pp(2600),q:1.6,dur:.035,vol:.45*v});sTone(ac,d,t,{f0:pp(260),f1:pp(120),dur:.05,vol:.45*v});},                                   // quick light slap
+  pCross:(ac,d,t,v)=>{sNoise(ac,d,t,{f0:pp(700),f1:pp(1800),q:1,dur:.05,vol:.18*v});sNoise(ac,d,t+.035,{ft:'lowpass',f0:pp(1600),dur:.08,vol:.55*v});sTone(ac,d,t+.035,{f0:pp(170),f1:pp(60),dur:.11,vol:.8*v});}, // whoosh into a solid smack
+  pFin:(ac,d,t,v)=>{sNoise(ac,d,t,{f0:pp(3600),q:2.5,dur:.03,vol:.55*v});sTone(ac,d,t,{f0:pp(120),f1:pp(32),dur:.32,vol:1.05*v});sNoise(ac,d,t,{ft:'lowpass',f0:pp(1200),f1:200,dur:.25,vol:.75*v});
+    sTone(ac,d,t+.02,{type:'triangle',f0:pp(1400),f1:pp(1200),dur:.22,vol:.07*v});},                                                                                       // crack + boom + a little ring
+  pUpper:(ac,d,t,v)=>{sTone(ac,d,t,{f0:pp(90),f1:pp(240),dur:.12,vol:.7*v});sNoise(ac,d,t,{f0:pp(500),f1:pp(2600),q:2,dur:.16,vol:.35*v});},                             // rising thump
+  pSpin1:(ac,d,t,v)=>{sNoise(ac,d,t,{f0:pp(1200),f1:pp(500),q:2,dur:.09,vol:.35*v});sTone(ac,d,t,{f0:pp(200),f1:pp(90),dur:.06,vol:.4*v});},                              // backhand whip
+  pSpin2:(ac,d,t,v)=>{sTone(ac,d,t,{f0:pp(140),f1:pp(45),dur:.16,vol:.9*v});sNoise(ac,d,t,{ft:'lowpass',f0:pp(1100),dur:.12,vol:.6*v});sNoise(ac,d,t,{f0:pp(2200),q:3,dur:.04,vol:.3*v});}, // spinning fist lands
+  pDash:(ac,d,t,v)=>{sNoise(ac,d,t,{f0:pp(400),f1:pp(1500),q:1,dur:.06,vol:.25*v});sTone(ac,d,t+.03,{type:'square',f0:pp(120),f1:pp(50),dur:.1,vol:.22*v});sTone(ac,d,t+.03,{f0:pp(150),f1:pp(55),dur:.14,vol:.85*v});}, // rushing body blow
+  pAirJab:(ac,d,t,v)=>{sNoise(ac,d,t,{f0:pp(3200),q:2,dur:.03,vol:.4*v});sTone(ac,d,t,{f0:pp(330),f1:pp(160),dur:.045,vol:.4*v});},                                     // high, light
+  pKick:(ac,d,t,v)=>{sTone(ac,d,t,{f0:pp(110),f1:pp(40),dur:.2,vol:1*v});sNoise(ac,d,t,{ft:'lowpass',f0:pp(900),f1:250,dur:.15,vol:.65*v});sNoise(ac,d,t,{f0:pp(1500),q:1.2,dur:.06,vol:.35*v});}, // meaty kick
+  pChase:(ac,d,t,v)=>{sNoise(ac,d,t,{f0:pp(800),f1:pp(3000),q:2,dur:.08,vol:.3*v});sTone(ac,d,t+.04,{f0:pp(220),f1:pp(90),dur:.08,vol:.6*v});},                          // rising swipe
+  pThud:(ac,d,t,v)=>{sTone(ac,d,t,{f0:pp(90),f1:pp(40),dur:.12,vol:.6*v});}});
 function sfx(n,v,len){if(!SET||!SET.sfx||!SND[n])return;const ac=SFX.ac;if(!ac||ac.state!=='running')return;const now=ac.currentTime;if(now-(SFX.last[n]||0)<.035)return;SFX.last[n]=now;
-  SFX.out.gain.value=Math.pow(SET.sfx/10,1.6)*.9;try{SND[n](ac,SFX.out,now+.005,v||1,len);}catch(e){}}
+  SFX.p=.94+Math.random()*.12;SFX.out.gain.value=Math.pow(SET.sfx/10,1.6)*.9;try{SND[n](ac,SFX.out,now+.005,v||1,len);}catch(e){}}
 // hook the sounds into the fight
 {const _h=hitOrb;hitOrb=function(o,w){const hp0=o.hp,launch=w.ky!=null&&w.ky<=-150&&typeof canJug==='function'&&canJug(o)&&!o.jug;
-  sfx(launch?'launch':(w.fin||w.heavy||w.spike)?'heavy':(w.dmg||1)>=2?'hit':'jab');_h(o,w);
+  const st=P.st;let n=null;if(launch)n='launch';else if(w.spike)n='heavy';
+  else if(st==='atk')n={jab:'pJab',cross:'pCross',fin:'pFin',upper:'pUpper',spin:w.away?'pSpin1':'pSpin2',dash:'pDash'}[P.mv];
+  else if(st==='ajab'||st==='airp')n='pAirJab';else if(st==='akick')n='pKick';else if(st==='achase')n='pChase';else if(st==='upc')n='pUpper';else if(st==='dash')n='pDash';else if(st==='slland')n='pThud';else if(st==='hvr')n='heavy';
+  sfx(n||((w.fin||w.heavy)?'heavy':(w.dmg||1)>=2?'hit':'jab'));_h(o,w);
   if((hp0==null||hp0>0)&&o.hp<=0&&o.hp>-900)sfx(['wnoise','wbrute','cbars','ctank','eyetv','bigeye'].includes(o.skin)?'kotv':'ko');};}
 {const _h=hurtBy;hurtBy=function(o){const hp0=P.hp,sh=P.sh,ph=TRU.phT;const r=_h(o);if(P.hp<hp0)sfx('hurt');else if(TRU.phT!==ph)sfx('phase');else if(sh&&!P.sh)sfx(o&&o.brk?'shieldbreak':'block');return r;};}
 {const _s=startAtk;startAtk=function(d){_s(d);sfx('swing');};}
