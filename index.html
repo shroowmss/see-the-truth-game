@@ -427,7 +427,7 @@ function updatePlayer(dt){
   if(s==='hurt'){if(P.t>.6&&!P.air)setSt('idle');}
   else if(s==='dash'){dashStep(dir);}
   else if(s==='atk'){atkStep(dir);}
-  else if(s==='upc'){if(P.stall>0){P.stall-=dt;P.vy=Math.min(P.vy,30);}if(!aerChase()){upcStep(dir);if(P.ul&&P.upHit&&(P.t-P.ulT)*30>=4&&hit.KeyZ)aerStart(keys.ArrowDown?'aslam':'ajab');}}
+  else if(s==='upc'){if(P.stall>0){P.stall-=dt;P.vy=Math.min(P.vy,30);}if(!aerChase()){upcStep(dir);if(P.ul&&P.upHit&&(P.t-P.ulT)*30>=4){const z=zTake((P.ulG||0)+.02);if(z)aerStart(z.dn?'aslam':'ajab');}}}
   else if(s==='hvc'){hvcStep(dt);}
   else if(s==='hvr'){hvrStep(dir);}
   else if(P.air){aerAir(s,dir,dt);}
@@ -579,7 +579,7 @@ function beginMove(mv){setSt('atk');P.mv=mv;P.t=0;P.q=0;P.hitset=new Set();const
   if(m.push)P.vx=P.face*m.push;if(mv==='dash')P.vx=P.face*Math.max(Math.abs(P.vx),m.dash[1]);}
 function startAtk(dir){
   if(keys.ArrowUp)return startUpc(false);
-  if(dir&&(dir===-P.face||(P.turnG&&G-P.turnG<.15))){P.face=dir;return beginMove('spin');}
+  const bk=!dir&&P.dq&&G-P.dq.t<.15&&P.dq.d===-P.face;if((dir&&dir===-P.face)||bk||(P.turnG&&G-P.turnG<.15)){if(dir)P.face=dir;else if(bk)P.face=P.dq.d;P.dq=null;return beginMove('spin');}
   if((P.spr||keys.ShiftLeft||keys.ShiftRight||runT)&&dir&&Math.abs(P.vx)>95||Math.abs(P.vx)>140)return beginMove('dash');
   beginMove('jab');}
 function atkStep(dir){const m=MOVES[P.mv],u=P.t*30;if(P.mv==='jab'&&keys.KeyZ&&P.t>HVY.hold&&!P.air&&!P.q){setSt('hvc');P.ch=0;P.chMax=0;return;}if(hit.KeyZ)P.q=Math.min(2,(P.q||0)+1);
@@ -660,8 +660,8 @@ ANIM.upf1={f:AF([106,1]),fps:1};ANIM.upf2={f:AF([107,1]),fps:1};ANIM.upf3={f:AF(
 ANIM.upland={f:AF([109,3],[110,3],[111,3],[112,3],[113,3]),fps:30};
 const UPHIT={box:[-5,33,-74,8],dmg:2,kx:40,ky:-290,stop:.09,shake:.18,heavy:1,col:'#c9a6ff'};
 function startUpc(air){setSt('upc');P.t=0;P.hitset=new Set();P.upHit=0;P.upAir=air?1:0;P.q=0;
-  if(air){P.ul=1;P.ulT=0;P.vy=Math.min(P.vy,-235);P.jhold=true;P.upUsed=1;cashSpray();}else{P.ul=0;P.vx*=.3;}}
-function upcStep(dir){if(!P.ul&&P.t*30>=5){P.ul=1;P.ulT=P.t;P.vy=-278;P.air=true;P.jhold=true;P.upUsed=1;landDust(8,60,5);cashSpray();}}
+  if(air){P.ul=1;P.ulT=0;P.ulG=G;P.vy=Math.min(P.vy,-235);P.jhold=true;P.upUsed=1;cashSpray();}else{P.ul=0;P.vx*=.3;}}
+function upcStep(dir){if(!P.ul&&P.t*30>=5){P.ul=1;P.ulT=P.t;P.ulG=G;P.vy=-278;P.air=true;P.jhold=true;P.upUsed=1;landDust(8,60,5);cashSpray();}}
 function upcHits(){if(P.st!=='upc'||!P.ul)return;const u=(P.t-P.ulT)*30,a=P.upAir?2:0,b=P.upAir?10:12;if(u<a||u>=b)return;
   for(const o of foes()){if(!o.alive||o.dying!=null||o.st==='dead')continue;const key='u:'+(o.id||orbs.indexOf(o));if(P.hitset.has(key))continue;
     const rx=(o.x-P.x)*P.face,ry=foeY(o)-P.y;if(rx>UPHIT.box[0]-7&&rx<UPHIT.box[1]+7&&ry>UPHIT.box[2]-7&&ry<UPHIT.box[3]+7){P.hitset.add(key);if(!P.upHit)P.stall=.28;P.upHit=1;for(const d of drops)if(d.sid===P.sprayId)d.v=10;hitOrb(o,UPHIT);}}}
@@ -1338,20 +1338,23 @@ function aerJugStep(o,dt){const j=o.jug;j.vy=Math.min(j.vy+(j.vy<0?620:900)*dt,6
     if(j.sp){o.hp-=1;sfx('spike');shakeT=Math.max(shakeT,.18);rumble(.5,.6,140);pop(o.x,o.y-50,'SPIKED!','#c9a6ff');cash+=15;}
     if(j.sp&&!j.b&&o.hp>0){o.jug={y0:j.y0,vy:-150,b:1};return;}
     o.jug=null;o.st='hit';o.t=0;}}
-function aerStart(s){setSt(s);P.hitset=new Set();if(s==='aslam'){P.vy=Math.min(P.vy,-60);}}
+// remember each attack press (and whether Down was held) so a follow-up pressed a little early still comes out
+{const _k=keyDown;keyDown=function(c){if(c==='KeyZ'&&!keys.KeyZ){(P.zq=P.zq||[]).push({t:G,dn:!!keys.ArrowDown});if(P.zq.length>4)P.zq.shift();}if((c==='ArrowLeft'||c==='ArrowRight')&&!keys[c])P.dq={t:G,d:c==='ArrowLeft'?-1:1};return _k(c);};}
+function zTake(since){const q=P.zq||[];while(q.length&&(G-q[0].t>=.3||q[0].t<since-.001))q.shift();return q.shift()||null;}
+function aerStart(s){setSt(s);P.ast=G;P.hitset=new Set();if(s==='aslam'){P.vy=Math.min(P.vy,-60);}}
 function aerChase(){if(!hit.Space||P.chased||G-(P.chaseT||-9)>.7)return false;let tg=null,bd=170;for(const o of botsA)if(o.alive&&o.jug){const d=Math.hypot(o.x-P.x,o.y-18-(P.y-22));if(d<bd){bd=d;tg=o;}}
   if(!tg)return false;P.face=tg.x>=P.x?1:-1;P.chased=1;P.jb=0;aerStart('achase');P.vy=Math.max(-220,Math.min(40,(tg.y-6-P.y)*4));P.stall=.3;return true;}
 // called from the air branch of updatePlayer
 function aerAir(s,dir,dt){if(aerChase())return;
   if(P.stall>0){P.stall-=dt;P.vy=Math.min(P.vy,30);}
-  if(s==='ajab'){const f=P.t*24;if(f>=4&&hit.KeyZ){aerStart(keys.ArrowDown?'aslam':'akick');return;}if(f>=8){setSt('jump');P.t=.3;}return;}
+  if(s==='ajab'){const f=P.t*24;if(f>=4){const z=zTake(0);if(z){aerStart(z.dn?'aslam':'akick');return;}}if(f>=8){setSt('jump');P.t=.3;}return;}
   if(s==='akick'){if(P.t*22>=8){setSt('jump');P.t=.3;}return;}
   if(s==='aslam'){if(P.t*20<4)P.vy=Math.min(P.vy,-10);else{setSt('adive');P.vy=560;}return;}
   if(s==='adive'){P.vy=Math.max(P.vy,560);if(Math.floor(G*30)%2)fx.push({x:P.x+(rnd()-.5)*10,y:P.y-40,vx:0,vy:-60,l:0,L:.2,c:'#d9d3f0',z:1});return;}
-  if(s==='achase'){if(P.t*22>=6){setSt('jump');P.t=.3;}else if(P.t*22>=3&&hit.KeyZ)aerStart('ajab');return;}
+  if(s==='achase'){if(P.t*22>=6){setSt('jump');P.t=.3;}else if(P.t*22>=3){const z=zTake(P.ast);if(z)aerStart(z.dn?'aslam':'ajab');}return;}
   if(hit.KeyZ&&keys.ArrowUp&&!P.upUsed){startUpc(true);return;}
-  if(hit.KeyZ&&keys.ArrowDown){aerStart('aslam');return;}
-  if(hit.KeyZ){aerStart('ajab');}}
+  if(hit.KeyZ&&keys.ArrowDown){P.zq=[];aerStart('aslam');return;}
+  if(hit.KeyZ){P.zq=[];aerStart('ajab');}}
 function aerLand(){setSt('slland');shakeT=Math.max(shakeT,.22);rumble(.7,.8,200);landDust(18,120,12);spark(P.x,P.y-2,18,['#ffffff','#c9a6ff','#d9d3f0'],120);
   for(const o of foes()){if(!o.alive||o.dying!=null||o.st==='dead'||o.jug)continue;if(Math.abs(o.x-P.x)<48&&Math.abs((o.kind==='bot'?o.y:o.y+18)-P.y)<22)hitOrb(o,{dmg:1,kx:90,ky:-170,away:1,stop:.05,col:'#c9a6ff'});}}
 function aerHits(){const m=AERM[P.st];if(!m)return;const u=P.t*m.fps;
@@ -1359,6 +1362,8 @@ function aerHits(){const m=AERM[P.st];if(!m)return;const u=P.t*m.fps;
     for(const o of foes()){if(!o.alive||o.dying!=null||o.st==='dead')continue;const key='a'+P.st+wi+':'+(o.id||orbs.indexOf(o));if(P.hitset.has(key))continue;
       const rx=(o.x-P.x)*P.face,ry=foeY(o)-P.y;if(rx>w.box[0]-7&&rx<w.box[1]+7&&ry>w.box[2]-7&&ry<w.box[3]+7){P.hitset.add(key);P.airHits=(P.airHits||0)+1;if(P.airHits<7)P.stall=.16;hitOrb(o,w);}}});}
 /*AEREND*/
+
+
 
 
 
@@ -1476,9 +1481,9 @@ function sfx(n,v,len,pan){if(!SET||!SET.sfx||(!SND[n]&&!SMP.map[n]))return;const
   SFX.p=.94+Math.random()*.12;SFX.out.gain.value=Math.pow(SET.sfx/10,1.6)*.9;smpLoad();try{if(!smpPlay(n,v,dst))SND[n](ac,dst,now+.005,v||1,len);}catch(e){}}
 // hook the sounds into the fight
 {const _h=hitOrb;hitOrb=function(o,w){const hp0=o.hp,launch=w.ky!=null&&w.ky<=-150&&typeof canJug==='function'&&canJug(o)&&!o.jug;
-  const st=P.st;let n=null;if(launch)n='launch';else if(w.spike)n='heavy';
+  const st=P.st;let n=null;if(launch&&st!=='hvr')n='launch';else if(w.spike)n='heavy';
   else if(st==='atk')n={jab:'pJab',cross:'pCross',fin:'pFin',upper:'pUpper',spin:w.away?'pSpin1':'pSpin2',dash:'pDash'}[P.mv];
-  else if(st==='ajab'||st==='airp')n='pAirJab';else if(st==='akick')n='pKick';else if(st==='achase')n='pChase';else if(st==='upc')n='pUpper';else if(st==='dash')n='pDash';else if(st==='slland')n='pThud';else if(st==='hvr')n='heavy';
+  else if(st==='ajab'||st==='airp')n='pAirJab';else if(st==='akick')n='pKick';else if(st==='achase')n='pChase';else if(st==='upc')n='pUpper';else if(st==='dash')n='pDash';else if(st==='slland')n='pThud';else if(st==='hvr')n=w.dmg>=2?'heavy':'hit';
   sfx(n||((w.fin||w.heavy)?'heavy':(w.dmg||1)>=2?'hit':'jab'));_h(o,w);
   if((hp0==null||hp0>0)&&o.hp<=0&&o.hp>-900)sfx(['wnoise','wbrute','cbars','ctank','eyetv','bigeye'].includes(o.skin)?'kotv':'ko');};}
 {const _h=hurtBy;hurtBy=function(o){const hp0=P.hp,sh=P.sh,ph=TRU.phT;const r=_h(o);if(P.hp<hp0)sfx('hurt');else if(TRU.phT!==ph)sfx('phase');else if(sh&&!P.sh)sfx(o&&o.brk?'shieldbreak':'block');return r;};}
