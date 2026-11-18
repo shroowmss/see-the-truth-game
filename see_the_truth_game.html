@@ -1372,7 +1372,7 @@ function adDrawBack(){const cx=camX,cy=camY;
   ctx.globalAlpha=1;}
 function adDrawFront(){const cx=camX,cy=camY;let dk=0;
   for(const p of ADX){const u=p.t/p.L,x=Math.round(p.x-cx),y=Math.round(p.y-cy);
-    if(p.k==='sm'){const r=Math.max(1,Math.round(p.r*(1+u*.8)));ctx.globalAlpha=(1-u)*.6;for(let dy=-r;dy<=r;dy++){const w=Math.round(Math.sqrt(r*r-dy*dy));px(x-w,y+dy,w*2+1,1,dy>r*.4?ADC[2]:ADC[1]);}ctx.globalAlpha=(1-u)*.5;px(x-Math.round(r*.6),y+r,Math.round(r*1.2)+1,1,ADC[3]);}
+    if(p.k==='sm'&&!p.bk){const r=Math.max(1,Math.round(p.r*(1+u*.8)));ctx.globalAlpha=(1-u)*.6;for(let dy=-r;dy<=r;dy++){const w=Math.round(Math.sqrt(r*r-dy*dy));px(x-w,y+dy,w*2+1,1,dy>r*.4?ADC[2]:ADC[1]);}ctx.globalAlpha=(1-u)*.5;px(x-Math.round(r*.6),y+r,Math.round(r*1.2)+1,1,ADC[3]);}
     else if(p.k==='em'){ctx.globalAlpha=Math.min(1,(1-u)*2)*(Math.floor(p.t*20+p.x)%5?1:.4);px(x,y,1,1,u<.3?ADC[4]:ADC[3]);if(u<.25)px(x,y+1,1,1,ADC[2]);}
     else if(p.k==='sl'){const q=Math.min(1,u*5);ctx.globalAlpha=1-u;const x0=p.x0-cx,y0=p.y0-cy,x1=x0+(p.x1-p.x0)*q,y1=y0+(p.y1-p.y0)*q;fcLine(Math.round(x0),Math.round(y0)+1,Math.round(x1),Math.round(y1)+1,ADC[2]);fcLine(Math.round(x0),Math.round(y0),Math.round(x1),Math.round(y1),u<.4?'#ffffff':ADC[3]);}
     else if(p.k==='td'){const q=p.t-p.dl;if(q<0)continue;const up=q<.08?q/.08:q>.3?Math.max(0,1-(q-.3)/.2):1,h=Math.round(p.h*up),w=Math.max(2,Math.round(p.h*.3));
@@ -1385,6 +1385,31 @@ function adDrawFront(){const cx=camX,cy=camY;let dk=0;
 {const _da=diaAura;diaAura=function(x,y){_da(x,y);if(AD_ON()&&scene==='play')adDrawFront();};}
 {const _ho=hitOrb;hitOrb=function(o,w){const r=_ho(o,w);if(AD_ON()&&o){const y=(typeof foeY==='function'?foeY(o):o.y)-22,big=w&&(w.heavy||w.fin||w.dmg>=2),dd=P.x<o.x?1:-1;
   adSlash(o.x,y,dd,big);adEmbers(o.x,y,big?9:5,big?120:80,dd,30);adSmoke(o.x,y,big?3:1,30,dd,4);}return r;};}
+
+// ---- AFTER DARK idle aura: a flickering black haze with a red rim that hugs his outline while he stands still, with smoke wisps off the shoulders
+const ADA={oc:null,ox:null,a:0,last:0,w:0};
+function adAuraDraw(){const r=playAnim(),n=r[0],on=AD_ON()&&scene==='play'&&(n==='ad_idle'||n==='ad_wait'||n==='ad_tsight');
+  const dt=Math.min(.05,Math.max(0,G-ADA.last));ADA.last=G;ADA.a=Math.max(0,Math.min(1,ADA.a+(on?dt/.35:-dt/.18)));if(ADA.a<=0||!AD_ON())return;
+  const i=fidx(n,r[1]);if(i<5000||i>=6000)return;const S=ADS,j=i-5000;
+  if(!ADA.oc){ADA.oc=document.createElement('canvas');ADA.oc.width=S.CW;ADA.oc.height=S.CH;ADA.ox=ADA.oc.getContext('2d');}
+  const o=ADA.ox,cs=[];for(const col of ['#ff4d6d','#a0102a','#12020a']){o.globalCompositeOperation='source-over';o.clearRect(0,0,S.CW,S.CH);o.drawImage(IMG.ads,(j%S.COLS)*S.CW,Math.floor(j/S.COLS)*S.CH,S.CW,S.CH,0,0,S.CW,S.CH);
+    o.globalCompositeOperation='source-in';o.fillStyle=col;o.fillRect(0,0,S.CW,S.CH);const c=document.createElement('canvas');c.width=S.CW;c.height=S.CH;c.getContext('2d').drawImage(ADA.oc,0,0);cs.push(c);}
+  const Z=LEVEL.onyxS||1,x=Math.round(P.x-camX),y=Math.round(P.y-camY+FOOT+FO(P.y)),A=ADA.a,t=G;
+  ctx.save();ctx.translate(x,y);if(Z!==1)ctx.scale(Z,Z);if(P.face<0)ctx.scale(-1,1);
+  const blit=(c,dx,dy,al)=>{ctx.globalAlpha=al*A;ctx.drawImage(c,-S.AX+dx,-S.AY+dy);};
+  // outer red rim, flickering upward like flame
+  const f1=Math.sin(t*9)*.5+.5,f2=Math.sin(t*13+1.7)*.5+.5;
+  for(const [dx,dy] of [[-3,0],[3,0],[0,-4],[-2,-3],[2,-3],[-2,2],[2,2],[0,-5-Math.round(f1*2)]])blit(cs[0],dx,dy,.16+.16*f2);
+  for(const [dx,dy] of [[-2,0],[2,0],[0,-3],[-1,-2],[1,-2],[0,2]])blit(cs[1],dx,dy,.32+.18*f1);
+  // the dark haze right against his body
+  for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,-2],[-1,-1],[1,-1]])blit(cs[2],dx,dy,.7);
+  ctx.restore();ctx.globalAlpha=1;
+  // wisps of shadow smoke peeling off his shoulders and back
+  if(!paused){ADA.w-=dt;if(ADA.w<=0&&A>.5){ADA.w=.09+fcR()*.08;const d=P.face||1,sx=P.x+(fcR()<.5?-d*7:d*4)+(fcR()-.5)*6;
+    adAdd({k:'sm',bk:1,x:sx,y:P.y-30-fcR()*14,vx:-d*(4+fcR()*8),vy:-12-fcR()*10,r:1.5+fcR()*1.5,L:.7+fcR()*.4});if(fcR()<.35)adAdd({k:'em',x:sx,y:P.y-34,vx:(fcR()-.5)*6,vy:-16,L:.9});}}}
+function adDrawWisps(){for(const p of ADX){if(p.k!=='sm'||!p.bk)continue;const u=p.t/p.L,x=Math.round(p.x-camX),y=Math.round(p.y-camY),r=Math.max(1,Math.round(p.r*(1+u*.8)));
+  ctx.globalAlpha=(1-u)*.55;for(let dy=-r;dy<=r;dy++){const w=Math.round(Math.sqrt(r*r-dy*dy));px(x-w,y+dy,w*2+1,1,dy<-r*.3?ADC[2]:ADC[1]);}}ctx.globalAlpha=1;}
+{const _b=adDrawBack;adDrawBack=function(){adDrawWisps();adAuraDraw();_b();};}
 
 /*SHDBEND*/
 
