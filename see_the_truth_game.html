@@ -1046,9 +1046,11 @@ const SHV={sel:0,t0:0};
 const shList=()=>Object.keys(SHIRTS).concat(['?']);
 function shOpen(){pview='shirts';const l=shList();SHV.sel=Math.max(0,l.indexOf(SH_ON));SHV.t0=G;}
 function shWearSel(){const id=shList()[SHV.sel];if(!SH_OWN.includes(id))return;if(SH_ON===id){SHV.msg='ALREADY WEARING IT';SHV.msgT=G;return;}SH_ON=id;try{localStorage.setItem(SHIRT_ON_K,id);}catch(e){}TRU.swT=G;TRU.tog=0;TRU.on=0;if(id==='diamond'){P.sh=0;P.shT=DIA.recharge;}rumble(.3,.5,120);SHV.msg='NOW WEARING '+SHIRTS[id].name;SHV.msgT=G;}
-function shKey(code){const n=shList().length;if(code.indexOf('Arrow')===0)SHV.msgT=-9;if(code==='ArrowUp'||code==='ArrowLeft')SHV.sel=(SHV.sel+n-1)%n;if(code==='ArrowDown'||code==='ArrowRight')SHV.sel=(SHV.sel+1)%n;if(code==='Space')shWearSel();}
+const SHOP_URL=/github\.io$/.test(location.hostname)?new URL('shop.html',location.href).href:'https://shroowmss.github.io/see-the-truth-game/shop.html';
+function shBuy(){const id=shList()[SHV.sel],url=SHOP_URL+(SHIRTS[id]?'#'+id:'');let w=null;try{w=window.open(url,'_blank');}catch(e){}SHV.msg=w?'THE SHOP OPENED IN A NEW TAB':'ALLOW POP-UPS TO OPEN THE SHOP';SHV.msgT=G;try{ui('uiOk');}catch(e){}}
+function shKey(code){const n=shList().length;if(code==='KeyB'){shBuy();return;}if(code.indexOf('Arrow')===0)SHV.msgT=-9;if(code==='ArrowUp'||code==='ArrowLeft')SHV.sel=(SHV.sel+n-1)%n;if(code==='ArrowDown'||code==='ArrowRight')SHV.sel=(SHV.sel+1)%n;if(code==='Space')shWearSel();}
 function shTap(x,y){const l=shList();for(let i=0;i<l.length;i++){const yy=38+i*30;if(x>=8&&x<112&&y>=yy&&y<yy+26){if(SHV.sel===i)shWearSel();else{SHV.sel=i;SHV.msgT=-9;}return;}}
-  if(x>=120&&x<W-8&&y>=194&&y<210)shWearSel();}
+  if(x>=120&&x<W-8&&y>=194&&y<210){const id=l[SHV.sel],bw=W-120-8-12,b1=bw-62;if(!SH_OWN.includes(id)||x>=126+b1+4)shBuy();else shWearSel();}}
 function shIcon(x,y,c){px(x,y+1,3,2,c);px(x+6,y+1,3,2,c);px(x+2,y,5,1,c);px(x+2,y+1,5,8,c);px(x+3,y,3,1,'rgba(0,0,0,.35)');}
 function drawShirts(){ctx.imageSmoothingEnabled=false;ctx.drawImage(PSNAP,0,0);ctx.fillStyle='rgba(8,3,22,.94)';ctx.fillRect(0,0,W,H);
   const l=shList(),own=l.filter(i=>SH_OWN.includes(i)).length,tot=Object.keys(SHIRTS).length;
@@ -1063,15 +1065,20 @@ function drawShirts(){ctx.imageSmoothingEnabled=false;ctx.drawImage(PSNAP,0,0);c
     else{ctx.globalAlpha=.9;const D=SHDB[id];if(IMG[D.img]&&IMG[D.img].width){ctx.filter='brightness(0)';ctx.drawImage(IMG[D.img],0,0,D.fs,D.fs,11,y+3,20,20);ctx.filter='none';}ctx.globalAlpha=1;T('? ? ?',35,y+11,8,'#6a5a98','left');T('NOT FOUND',35,y+21,8,'#4a3a78','left');}});
   // the detail card
   const id=l[SHV.sel],has=SH_OWN.includes(id),X=120,Y=38,Wd=W-X-8;px(X,Y,Wd,176,'rgba(255,255,255,.04)');px(X,Y,Wd,1,'#2a2450');
-  if(!has){T(id==='?'?'MORE SHIRTS ARE OUT THERE.':'YOU HAVENT FOUND THIS ONE YET.',X+Wd/2,Y+80,8,'#a49bd6','center');T(id==='?'?'KEEP YOUR EYES OPEN.':'KEEP PLAYING.',X+Wd/2,Y+94,8,'#6a5a98','center');return;}
+  if(!has){T(id==='?'?'MORE SHIRTS ARE OUT THERE.':'YOU HAVENT FOUND THIS ONE YET.',X+Wd/2,Y+80,8,'#a49bd6','center');T(id==='?'?'KEEP YOUR EYES OPEN.':'KEEP PLAYING.',X+Wd/2,Y+94,8,'#6a5a98','center');
+    {const bw=Wd-12;px(X+6,194,bw,14,'rgba(111,232,255,.14)');px(X+6,194,bw,1,'#6fe8ff');px(X+6,207,bw,1,'#6fe8ff');T(G-(SHV.msgT||-9)<1.6?SHV.msg:PR('B: VISIT THE SHOP','[Y] VISIT THE SHOP','TAP: VISIT THE SHOP'),X+6+bw/2,204,8,'#bff4ff','center');}return;}
   const S_=SHIRTS[id],D=SHDB[id],im=IMG[D.img],nf=im&&im.width?Math.floor(im.width/D.fs):1,f=Math.floor((G-SHV.t0)*9)%nf;
   {const g=ctx.createRadialGradient(X+30,Y+32,2,X+30,Y+32,30);g.addColorStop(0,S_.col+'55');g.addColorStop(1,S_.col+'00');ctx.fillStyle=g;ctx.fillRect(X,Y+2,60,60);}
   ctx.drawImage(im,f*D.fs,0,D.fs,D.fs,X+6,Y+6,50,50);
   T(S_.name,X+62,Y+16,8,'#ffffff','left');T('FOUND AT',X+62,Y+32,8,'#6a5a98','left');T(D.where[0],X+62,Y+43,8,'#a49bd6','left');T(D.where[1],X+62,Y+53,8,'#a49bd6','left');
   let yy=Y+72;D.pw.forEach(p=>{const key=PR(p.k[0],p.k[1],p.k[2]);px(X+6,yy-7,3,3,S_.col);T(p.n,X+13,yy,8,'#ffffff','left');if(key)TP(key,X+Wd-6,yy,8,'#ffd60a','right');
     const ln=wrap(p.d,21);ln.forEach((s,j)=>T(s,X+13,yy+11+j*9,8,'#a49bd6','left'));yy+=14+ln.length*9;});
-  const on=SH_ON===id,bw=Wd-12;px(X+6,194,bw,14,on?'rgba(77,255,106,.14)':'rgba(255,214,10,.2)');px(X+6,194,bw,1,on?'#4dff6a':'#ffd60a');px(X+6,207,bw,1,on?'#4dff6a':'#ffd60a');
-  T(G-(SHV.msgT||-9)<1.6?SHV.msg:on?'WEARING NOW':PR('ENTER: WEAR THIS SHIRT','[A] WEAR THIS SHIRT','TAP: WEAR THIS SHIRT'),X+6+bw/2,204,8,on?'#4dff6a':'#ffffff','center');}
+  const on=SH_ON===id,bw=Wd-12,b1=bw-62;
+  if(G-(SHV.msgT||-9)<1.6){px(X+6,194,bw,14,'rgba(255,214,10,.2)');px(X+6,194,bw,1,'#ffd60a');px(X+6,207,bw,1,'#ffd60a');T(SHV.msg,X+6+bw/2,204,8,'#ffffff','center');}
+  else{px(X+6,194,b1,14,on?'rgba(77,255,106,.14)':'rgba(255,214,10,.2)');px(X+6,194,b1,1,on?'#4dff6a':'#ffd60a');px(X+6,207,b1,1,on?'#4dff6a':'#ffd60a');
+    T(on?'WEARING NOW':PR('ENTER: WEAR','[A] WEAR','TAP: WEAR'),X+6+b1/2,204,8,on?'#4dff6a':'#ffffff','center');
+    const bx=X+6+b1+4,bb=58;px(bx,194,bb,14,'rgba(111,232,255,.16)');px(bx,194,bb,1,'#6fe8ff');px(bx,207,bb,1,'#6fe8ff');T(PR('B: BUY','[Y] BUY','BUY'),bx+bb/2-3,204,8,'#bff4ff','center');
+    px(bx+bb-9,198,4,1,'#6fe8ff');px(bx+bb-6,198,1,4,'#6fe8ff');px(bx+bb-7,199,1,1,'#6fe8ff');px(bx+bb-8,200,1,1,'#6fe8ff');px(bx+bb-9,201,1,1,'#6fe8ff');}}
 
 /*SHDBEND*/
 
@@ -4176,7 +4183,7 @@ function pollPad(){const pads=navigator.getGamepads?navigator.getGamepads():[];c
     if(live.some(gp=>gp.buttons.some((q,i)=>i!==16&&(q.pressed||q.value>.5)))||Math.abs(ax)>.45||Math.abs(ay)>.5)INPUT='pad';
     if(scene==='chill'&&b(3))want.add('KeyC');
     if(b(14)||ax<-.45)want.add('ArrowLeft');if(b(15)||ax>.45)want.add('ArrowRight');if(b(12)||ay<-.5)want.add('ArrowUp');if(b(13)||ay>.5)want.add('ArrowDown');
-    if(menu){if((scene==='select'||scene==='guide'||scene==='deadair')&&b(3))want.add('KeyC');if(paused&&pview==='music'&&b(3))want.add('KeyS');if(b(0))want.add('Enter');if(b(1))want.add('Escape');if(b(9))want.add(scene==='play'?'Escape':'Enter');}
+    if(menu){if((scene==='select'||scene==='guide'||scene==='deadair')&&b(3))want.add('KeyC');if(paused&&pview==='music'&&b(3))want.add('KeyS');if(paused&&pview==='shirts'&&b(3))want.add('KeyB');if(b(0))want.add('Enter');if(b(1))want.add('Escape');if(b(9))want.add(scene==='play'?'Escape':'Enter');}
     else{if(b(0))want.add('Space');if(b(2))want.add('KeyZ');if(b(1))want.add('KeyA');if(b(3))want.add('KeyC');if(b(4))want.add('KeyV');if(b(6))want.add('KeyX');if(b(5)||b(7))want.add('ShiftLeft');if(b(10))want.add('KeyQ');if(b(11))want.add('KeyE');if(b(9))want.add('Escape');}
     if(b(8))want.add('Escape');}
   for(const k of GP.held)if(!want.has(k))keyUp(k);

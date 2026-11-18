@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>See The Truth Supply</title>
+<meta name="description" content="Wear what Onyx wears. Shirts from See The Truth, with their in-game powers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+/* ===== STORE SETUP lives in the <script> at the bottom: prices + checkout links ===== */
+:root{--bg:#0b0618;--bg2:#120a28;--panel:#160d33;--line:#2a2450;--ink:#efeaff;--dim:#a49bd6;--faint:#6a5a98;--pink:#ff5ee8;--cyan:#6fe8ff;--yel:#ffd60a;--grn:#4dff6a;--red:#ff4d6d}
+*{box-sizing:border-box;margin:0}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--ink);font-family:'VT323',ui-monospace,monospace;font-size:20px;line-height:1.25;min-height:100vh;overflow-x:hidden}
+.px{font-family:'Press Start 2P',ui-monospace,monospace;letter-spacing:.02em}
+a{color:inherit}
+/* sky: stars + a faint scanline over everything */
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background:
+  radial-gradient(1px 1px at 12% 18%,#fff8 50%,transparent 51%),radial-gradient(1px 1px at 78% 12%,#fff6 50%,transparent 51%),radial-gradient(1px 1px at 46% 30%,#fff5 50%,transparent 51%),
+  radial-gradient(1px 1px at 88% 44%,#fff6 50%,transparent 51%),radial-gradient(1px 1px at 24% 52%,#fff4 50%,transparent 51%),radial-gradient(1px 1px at 62% 8%,#fff7 50%,transparent 51%),
+  radial-gradient(120% 60% at 50% 0%,#2a0f5a55,transparent 70%);z-index:0}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,#0000 0 2px,#00000022 2px 3px);z-index:5}
+.wrap{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding:0 16px}
+/* header */
+header{position:sticky;top:0;z-index:4;background:#0a1640ee;border-bottom:2px solid var(--grn);backdrop-filter:blur(4px)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;height:52px}
+.brand{display:flex;align-items:center;gap:10px;font-size:11px;color:var(--grn);text-decoration:none}
+.eye{width:22px;height:12px;background:#f4eeff;border-radius:50%/60%;position:relative;box-shadow:0 0 10px #ff5ee877;animation:blink 6s infinite}
+.eye::after{content:"";position:absolute;left:7px;top:2px;width:8px;height:8px;border-radius:50%;background:#c0122a;box-shadow:inset 0 0 0 2px #12020a}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+.back{font-size:10px;color:var(--ink);text-decoration:none;border:2px solid var(--cyan);padding:9px 12px;background:#0b1030;box-shadow:3px 3px 0 #000}
+.back:hover,.back:focus-visible{background:var(--cyan);color:#0b0618;outline:none}
+/* hero */
+.hero{text-align:center;padding:56px 0 34px}
+.hero .kick{font-size:10px;color:var(--pink);letter-spacing:.2em}
+.hero h1{font-size:clamp(26px,6vw,48px);margin:18px 0 14px;color:#fff;text-shadow:3px 3px 0 #ff5ee8,6px 6px 0 #12042c}
+.hero p{color:var(--dim);font-size:24px;max-width:560px;margin:0 auto}
+/* product grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;padding-bottom:40px}
+.card{background:linear-gradient(180deg,var(--panel),var(--bg2));border:2px solid var(--line);box-shadow:6px 6px 0 #000;display:flex;flex-direction:column;scroll-margin-top:72px;transition:border-color .2s}
+.card.focus{animation:focus 1.6s ease-out 2}
+@keyframes focus{0%{border-color:var(--yel);box-shadow:6px 6px 0 #000,0 0 0 4px #ffd60a66}100%{border-color:var(--line);box-shadow:6px 6px 0 #000,0 0 0 0 #ffd60a00}}
+.stage{position:relative;height:250px;display:grid;place-items:center;border-bottom:2px solid var(--line);overflow:hidden;background:radial-gradient(60% 55% at 50% 58%,var(--glow) 0%,#0000 70%),#0d0722}
+.stage::after{content:"";position:absolute;left:50%;bottom:26px;width:180px;height:22px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,var(--glow),#0000);opacity:.9}
+.spin{position:relative;z-index:1;image-rendering:pixelated;background-repeat:no-repeat;filter:drop-shadow(0 6px 0 #0008)}
+.found{position:absolute;top:10px;left:10px;font-size:8px;padding:6px 8px;background:#0d2a16;color:var(--grn);border:2px solid var(--grn);z-index:2}
+.tagline{position:absolute;top:10px;right:10px;font-size:8px;padding:6px 8px;color:#12042c;background:var(--yel);z-index:2}
+.body{padding:18px 18px 20px;display:flex;flex-direction:column;gap:14px;flex:1}
+.name{font-size:15px;line-height:1.5;color:#fff}
+.type{font-size:9px;color:var(--faint);margin-top:6px}
+.powers{border-left:3px solid var(--accent);padding-left:12px;display:flex;flex-direction:column;gap:8px}
+.powers h3{font-size:8px;color:var(--accent);font-weight:400}
+.pw b{font-family:'Press Start 2P',monospace;font-size:9px;color:#fff;font-weight:400;display:block;margin-bottom:3px}
+.pw span{color:var(--dim)}
+.sizes{display:flex;flex-wrap:wrap;gap:6px}
+.sizes button{font:10px 'Press Start 2P',monospace;color:var(--ink);background:#0b0618;border:2px solid var(--line);padding:9px 10px;cursor:pointer;min-width:44px}
+.sizes button[aria-pressed="true"]{border-color:var(--yel);color:var(--yel)}
+.sizes button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.buyrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:6px}
+.price{font-size:16px;color:var(--yel)}
+.price.tbd{font-size:10px;color:var(--faint)}
+.buy{font:11px 'Press Start 2P',monospace;color:#12042c;background:var(--yel);border:0;padding:14px 16px;box-shadow:4px 4px 0 #000;cursor:pointer;text-decoration:none;display:inline-block}
+.buy:hover,.buy:focus-visible{background:#fff;outline:none;transform:translate(-1px,-1px);box-shadow:5px 5px 0 #000}
+.buy:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000}
+.buy[aria-disabled="true"]{background:#2a2450;color:var(--faint);cursor:not-allowed;box-shadow:4px 4px 0 #000;transform:none}
+.note{font-size:18px;color:var(--faint);min-height:22px}
+/* the "more coming" card */
+.card.soon .stage{--glow:#5a2fa855}
+.qm{font-size:64px;color:#4a3a78;text-shadow:4px 4px 0 #000;z-index:1}
+footer{border-top:2px solid var(--line);padding:22px 0 40px;color:var(--faint);font-size:18px;text-align:center}
+footer .px{font-size:9px;color:var(--dim);display:block;margin-bottom:8px}
+@media (max-width:420px){.hero{padding:38px 0 24px}.stage{height:220px}.name{font-size:13px}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none!important}.eye{animation:none}.card.focus{animation:none;border-color:var(--yel)}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <a class="brand px" href="./"><span class="eye" aria-hidden="true"></span>SEE THE TRUTH</a>
+  <a class="back px" href="./" id="back">&larr; BACK TO THE GAME</a>
+</div></header>
+<main class="wrap">
+  <section class="hero">
+    <div class="kick px">OFFICIAL SUPPLY</div>
+    <h1 class="px">WEAR THE TRUTH</h1>
+    <p>Every shirt Onyx finds in the game is a real one. Here's the rack.</p>
+  </section>
+  <section class="grid" id="grid" aria-label="Shirts"></section>
+</main>
+<footer><div class="wrap">
+  <span class="px">SEE THE TRUTH SUPPLY</span>
+  <span id="foot">Checkout opens on our secure payment page.</span>
+</div></footer>
+<script>
+/* ================= STORE SETUP =================
+   For each shirt fill in:
+     price : what it costs, e.g. '$35'
+     link  : your checkout link (a Stripe Payment Link, Shopify / Big Cartel product page, etc.)
+     links : OR one checkout link per size, e.g. {S:'https://...', M:'https://...'}; then the size buttons decide where BUY goes
+   Leave link/links empty and the button shows DROPPING SOON. */
+const STORE={
+  diamond:{price:'',link:'',links:null,sizes:['S','M','L','XL','2XL']},
+  onyx:   {price:'',link:'',links:null,sizes:['S','M','L','XL','2XL']}
+};
+/* ================= the rack (matches the game) ================= */
+const RACK=[
+  {id:'diamond',name:'FOREVER CHANGING',type:'T-SHIRT',img:'shop/diamond.png',fs:52,n:10,fps:9,scale:4,col:'#8fe0ff',glow:'#39a8ff55',tag:'DIAMOND FORM',
+   powers:[['DIAMOND SHIELD','Soaks up one hit, then grows back in 6 seconds.'],['SHARD THROW','Your heavy attack fires diamond shards. Charge longer for more.']]},
+  {id:'onyx',name:'ONYX LONG SLEEVE',type:'LONG SLEEVE',img:'shop/onyx.png',fs:64,n:32,fps:9,scale:3.25,col:'#ff4d6d',glow:'#ff4d6d44',tag:'SIGHT + DASH',
+   powers:[['TRUE SIGHT','See what is real: hidden cash shows up and fake eyes fade away.'],['SHADOW DASH','Dash as a shadow. Enemies and bolts pass right through you.']]}
+];
+let found=[];try{found=JSON.parse(localStorage.getItem('stt_shirts')||'[]');}catch(e){}
+const grid=document.getElementById('grid'),css=document.createElement('style');document.head.appendChild(css);let rules='';
+const el=(t,a={},...k)=>{const e=document.createElement(t);for(const [n,v] of Object.entries(a)){if(n==='class')e.className=v;else if(n==='text')e.textContent=v;else e.setAttribute(n,v);}k.forEach(c=>c&&e.append(c));return e;};
+RACK.forEach(it=>{const cfg=STORE[it.id]||{},size=Math.round(it.fs*it.scale),strip=size*it.n;
+  rules+=`@keyframes sp_${it.id}{to{background-position:-${strip}px 0}} .sp_${it.id}{width:${size}px;height:${size}px;background-image:url(${it.img});background-size:${strip}px ${size}px;animation:sp_${it.id} ${(it.n/it.fps).toFixed(2)}s steps(${it.n}) infinite}`;
+  const has=found.includes(it.id),sizes=cfg.sizes||[];let pick=null;
+  const card=el('article',{class:'card',id:it.id,style:`--glow:${it.glow};--accent:${it.col}`});
+  const stage=el('div',{class:'stage'},el('div',{class:`spin sp_${it.id}`,role:'img','aria-label':it.name+', rotating'}),el('span',{class:'tagline px',text:it.tag}));
+  if(has)stage.append(el('span',{class:'found px',text:'✓ FOUND IN-GAME'}));
+  const powers=el('div',{class:'powers'},el('h3',{class:'px',text:'IN-GAME POWERS'}));it.powers.forEach(([n,d])=>powers.append(el('div',{class:'pw'},el('b',{text:n}),el('span',{text:d}))));
+  const note=el('div',{class:'note',role:'status'});
+  const live=!!(cfg.link||(cfg.links&&Object.values(cfg.links).some(Boolean)));
+  const buy=el('a',{class:'buy',href:'#','aria-disabled':live?'false':'true'});buy.textContent=live?'BUY':'DROPPING SOON';
+  const body=el('div',{class:'body'},el('div',{},el('div',{class:'name px',text:it.name}),el('div',{class:'type px',text:it.type})),powers);
+  if(sizes.length&&!cfg.links)body.append(el('div',{class:'type px',text:'SIZES  '+sizes.join(' \u00b7 ')+(live?'  (PICK AT CHECKOUT)':'')}));
+  if(sizes.length&&cfg.links){const row=el('div',{class:'sizes',role:'group','aria-label':'Size'});sizes.forEach(s=>{const b=el('button',{type:'button','aria-pressed':'false',text:s});
+      b.onclick=()=>{pick=s;row.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));note.textContent='';};row.append(b);});body.append(row);}
+  body.append(el('div',{class:'buyrow'},el('span',{class:'price px'+(cfg.price?'':' tbd'),text:cfg.price||'PRICE SOON'}),buy),note);
+  buy.onclick=e=>{e.preventDefault();if(!live){note.textContent='Not on sale yet. Check back soon.';return;}
+    let url=cfg.link;if(cfg.links){if(!pick){note.textContent='Pick a size first.';return;}url=cfg.links[pick];if(!url){note.textContent='Size '+pick+' is sold out.';return;}}
+    window.open(url,'_blank','noopener');};
+  card.append(stage,body);grid.append(card);});
+// one more card for shirts still hidden in the game
+grid.append(el('article',{class:'card soon'},el('div',{class:'stage'},el('div',{class:'qm px',text:'?'})),
+  el('div',{class:'body'},el('div',{},el('div',{class:'name px',text:'MORE OUT THERE'}),el('div',{class:'type px',text:'NEXT DROP'})),
+    el('div',{class:'note',text:'New shirts show up in the game first. Find them, then come back here.'}))));
+css.textContent=rules;
+if(!Object.values(STORE).some(c=>c.link||(c.links&&Object.values(c.links).some(Boolean))))document.getElementById('foot').textContent='The store opens soon. Prices and checkout are on the way.';
+// opened from the game with #diamond / #onyx: jump to that shirt and flash it
+function focusHash(){const id=location.hash.slice(1),c=id&&document.getElementById(id);if(!c||!c.classList.contains('card'))return;c.scrollIntoView({behavior:'smooth',block:'center'});c.classList.remove('focus');void c.offsetWidth;c.classList.add('focus');}
+addEventListener('hashchange',focusHash);requestAnimationFrame(focusHash);
+// opened in a new tab from the game: "back" closes this tab instead of loading a second copy of the game
+document.getElementById('back').addEventListener('click',e=>{if(window.opener&&!window.opener.closed){e.preventDefault();window.close();}});
+</script>
+</body>
+</html>
