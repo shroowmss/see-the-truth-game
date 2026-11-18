@@ -3451,12 +3451,12 @@ function drawChill(dt){chillUpdate(dt);const ts=G-s0,BG=CH.bg;
   ctx.globalCompositeOperation='lighter';for(const [bx,p,sp] of [[118,0,.5],[212,2.2,.37]]){const a=-Math.PI/2+.55*Math.sin(G*sp+p),len=190,w=.05;
     const g=ctx.createLinearGradient(bx,176,bx+Math.cos(a)*len,176+Math.sin(a)*len);g.addColorStop(0,'rgba(190,170,255,.16)');g.addColorStop(1,'rgba(190,170,255,0)');ctx.fillStyle=g;
     ctx.beginPath();ctx.moveTo(bx,176);ctx.lineTo(bx+Math.cos(a-w)*len,176+Math.sin(a-w)*len);ctx.lineTo(bx+Math.cos(a+w)*len,176+Math.sin(a+w)*len);ctx.closePath();ctx.fill();}ctx.globalCompositeOperation='source-over';
-  // easter egg: a small blimp carrying K+W in a heart. it only shows up if you chill (no input) for a while, or rarely by chance, and only once per visit
+  // easter egg: a small blimp carrying J+W in a heart. it only shows up if you chill (no input) for a while, or rarely by chance, and only once per visit
   if(CH.blimpT0!=null){const k=(G-CH.blimpT0)/30;if(k>1){CH.blimpT0=null;CH.blimpDone=true;}else{const bx=Math.round(350-k*420),by=Math.round(58+Math.sin(G*.4)*2);
     ctx.fillStyle='#2a2252';ctx.beginPath();ctx.ellipse(bx,by,22,8,0,0,7);ctx.fill();ctx.fillStyle='#3a3070';ctx.beginPath();ctx.ellipse(bx,by-2,20,5,0,0,7);ctx.fill();
     px(bx+18,by-7,4,5,'#2a2252');px(bx+18,by+3,4,5,'#2a2252');px(bx-5,by+7,10,3,'#1a1636');
     const HB=['..###.....###..','.#####...#####.','###############','###############','###############','.#############.','..###########..','...#########...','....#######....','.....#####.....','......###......','.......#.......'];
-    const TX=[[1,['#.#','##.','#..','##.','#.#']],[5,['...','.#.','###','.#.','...']],[9,['#...#','#...#','#.#.#','#.#.#','.#.#.']]];
+    const TX=[[1,['###','..#','..#','#.#','.#.']],[5,['...','.#.','###','.#.','...']],[9,['#...#','#...#','#.#.#','#.#.#','.#.#.']]];
     const hx=bx-7,hy=by-6,gl=ctx.createRadialGradient(bx,by,1,bx,by,14);gl.addColorStop(0,'rgba(255,80,170,'+(.35+.15*Math.sin(G*3))+')');gl.addColorStop(1,'rgba(255,80,170,0)');ctx.fillStyle=gl;ctx.fillRect(bx-14,by-14,28,28);
     HB.forEach((row,j)=>{for(let i=0;i<15;i++)if(row[i]==='#')px(hx+i,hy+j,1,1,j<2&&i<6?'#ff8ac0':'#ff3c8c');});
     TX.forEach(([ox,g])=>g.forEach((row,j)=>{for(let i=0;i<row.length;i++)if(row[i]==='#')px(hx+ox+i,hy+1+j,1,1,'#ffffff');}));
