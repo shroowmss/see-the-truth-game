@@ -1292,7 +1292,7 @@ function d22Bot(o,dt){const M=CBM[o.skin],dx=P.x-o.x,by=beamY(o);
   o.cd-=dt;const bob=Math.sin(G*2.2+o.a)*3;
   if(o.st==='hover'){const nx=o.x+o.dir*M.sp*dt;if(nx>o.b){o.dir=-1;}else if(nx<o.a){o.dir=1;}else o.x=nx;o.face=Math.abs(dx)<M.see?(dx<0?-1:1):o.dir;o.y+=(o.hy+bob-o.y)*Math.min(1,dt*4);
     if(o.cd<=0&&Math.abs(dx)<M.see&&Math.abs((P.y-20)-by)<70){o.st='charge';o.t=0;o.face=dx<0?-1:1;rumble(.15,.2,90);}}
-  else if(o.st==='charge'){if(o.t>M.chg){o.st='fire';o.t=0;o.hit=0;sfx('beam',o.skin==='ctank'?1.2:.8,M.dur);shakeT=Math.max(shakeT,o.skin==='ctank'?.15:.05);}}
+  else if(o.st==='charge'){if(o.t>M.chg){o.st='fire';o.t=0;o.hit=0;sfx('beam',o.skin==='ctank'?1.2:.8,M.dur);sfx(o.skin==='ctank'?'tkBeam':'beam',o.skin==='ctank'?1:.8,M.dur);shakeT=Math.max(shakeT,o.skin==='ctank'?.15:.05);}}
   else if(o.st==='fire'){const x0=o.x+o.face*M.front,x1=x0+o.face*M.len,lo=Math.min(x0,x1),hi=Math.max(x0,x1);
     if(!o.hit&&P.inv<=0&&P.st!=='hurt'&&P.x>lo-6&&P.x<hi+6&&by>P.y-40&&by<P.y-2+M.thk){o.hit=1;if(hurtBy({x:o.x,y:P.y,brk:M.brk}))return true;}
     if(o.t>M.dur){o.st='rec';o.t=0;}}
@@ -1429,6 +1429,14 @@ function aerHits(){const m=AERM[P.st];if(!m)return;const u=P.t*m.fps;
 
 
 
+
+
+
+
+
+
+
+
 /*SFX*/
 // ================= SOUND EFFECTS (made in code with Web Audio, no files) + SETTINGS =================
 var SET=(()=>{const d={mus:6,sfx:8,shake:1,rumble:1};try{return Object.assign(d,JSON.parse(localStorage.getItem('stt_set')||'{}'));}catch(e){return d;}})();
@@ -1454,6 +1462,19 @@ const SND={
   launch:(ac,d,t,v)=>{sNoise(ac,d,t,{f0:450,f1:3200,q:2.5,dur:.28,vol:.4*v});sTone(ac,d,t,{f0:170,f1:60,dur:.11,vol:.75*v});sTone(ac,d,t+.03,{type:'triangle',f0:300,f1:900,dur:.18,vol:.12*v});},
   spike:(ac,d,t,v)=>{sTone(ac,d,t,{f0:95,f1:28,dur:.38,vol:1.1*v});sNoise(ac,d,t,{ft:'lowpass',f0:700,f1:120,dur:.32,vol:.8*v});sNoise(ac,d,t+.02,{f0:2500,q:1,dur:.08,vol:.3*v});},
   slam:(ac,d,t,v)=>{sTone(ac,d,t,{f0:105,f1:32,dur:.28,vol:.95*v});sNoise(ac,d,t,{ft:'lowpass',f0:520,f1:140,dur:.28,vol:.65*v});},
+  tvCrack:(ac,d,t,v)=>{sNoise(ac,d,t,{ft:'highpass',f0:4000,dur:.09,vol:.3*v,gate:1});},
+  wnWind:(ac,d,t,v)=>{sWarble(ac,d,t,{type:'sine',f0:600,f1:2400,dur:.34,vol:.12*v,rate:18,depth:30,att:.02});sNoise(ac,d,t,{f0:1500,f1:5000,q:3,dur:.34,vol:.2*v,att:.05});},
+  wnLunge:(ac,d,t,v)=>{sNoise(ac,d,t,{f0:2500,f1:6000,q:1.2,dur:.3,vol:.5*v,att:.01});sNoise(ac,d,t,{ft:'lowpass',f0:900,f1:200,dur:.28,vol:.35*v});},
+  wnDead:(ac,d,t,v)=>{sNoise(ac,d,t,{ft:'highpass',f0:2500,dur:1,vol:.3*v,gate:1});sTone(ac,d,t,{f0:1200,f1:180,dur:.9,vol:.08*v});},
+  wbAlert:(ac,d,t,v)=>{for(let k=0;k<6;k++){sTone(ac,d,t+k*.045,{type:'square',f0:k%2?660:880,dur:.03,vol:.1*v,att:.001});sNoise(ac,d,t+k*.045,{ft:'highpass',f0:5000,dur:.02,vol:.15*v});}},
+  wbWind:(ac,d,t,v)=>{sTone(ac,d,t,{type:'sawtooth',f0:80,f1:240,dur:.55,vol:.14*v,att:.1});sTone(ac,d,t,{type:'square',f0:160,f1:480,dur:.55,vol:.05*v,att:.1});sNoise(ac,d,t,{f0:1200,f1:3000,q:2,dur:.55,vol:.15*v,att:.2,gate:1});},
+  wbLunge:(ac,d,t,v)=>{sNoise(ac,d,t,{ft:'lowpass',f0:1500,f1:300,dur:.35,vol:.5*v});sTone(ac,d,t,{type:'sawtooth',f0:220,f1:55,dur:.25,vol:.18*v});sNoise(ac,d,t+.12,{ft:'highpass',f0:3000,dur:.06,vol:.3*v});},
+  wbDead:(ac,d,t,v)=>{sNoise(ac,d,t,{f0:2000,q:.7,dur:1,vol:.4*v,gate:1});for(let k=0;k<6;k++)sTone(ac,d,t+k*.07,{type:'square',f0:900-k*120,dur:.05,vol:.08*v,att:.001});sTone(ac,d,t+.4,{f0:95,f1:35,dur:.35,vol:.6*v});},
+  cbCharge:(ac,d,t,v)=>{sWarble(ac,d,t,{type:'sine',f0:440,f1:1760,dur:.7,vol:.14*v,rate:9,depth:8,att:.05});for(const [fr,dl] of [[1320,.2],[1660,.3],[1980,.4]])sTone(ac,d,t+dl,{f0:fr,dur:.7-dl,vol:.035*v,att:.1});},
+  cbDead:(ac,d,t,v)=>{sTone(ac,d,t,{f0:1000,f1:120,dur:.6,vol:.14*v});sNoise(ac,d,t,{ft:'highpass',f0:3500,dur:.12,vol:.35*v});sTone(ac,d,t+.45,{f0:90,f1:40,dur:.2,vol:.5*v});},
+  tkCharge:(ac,d,t,v)=>{sTone(ac,d,t,{type:'sawtooth',f0:40,f1:160,dur:1.05,vol:.11*v,att:.15});sTone(ac,d,t,{f0:55,dur:1.05,vol:.14*v,att:.2});for(const dl of [0,.35,.7])sTone(ac,d,t+dl,{type:'square',f0:990,dur:.08,vol:.07*v,att:.002});},
+  tkBeam:(ac,d,t,v,len)=>{len=len||1.1;for(const fr of [55,82.4,110])sWarble(ac,d,t,{type:'sawtooth',f0:fr,dur:len,vol:.1*v,rate:12,depth:20,att:.03});sNoise(ac,d,t,{ft:'lowpass',f0:1400,f1:500,dur:len,vol:.35*v,att:.03});sNoise(ac,d,t,{ft:'highpass',f0:4000,dur:len,vol:.12*v,gate:1});},
+  tkDead:(ac,d,t,v)=>{sNoise(ac,d,t,{ft:'lowpass',f0:900,dur:.5,vol:.38*v});sTone(ac,d,t,{type:'sawtooth',f0:110,f1:30,dur:.6,vol:.15*v});sNoise(ac,d,t+.1,{ft:'highpass',f0:3000,dur:.9,vol:.22*v,gate:1});},
   kotv:(ac,d,t,v)=>{sNoise(ac,d,t,{ft:'highpass',f0:1800,dur:.32,vol:.5*v,gate:1});sTone(ac,d,t,{type:'square',f0:1300,f1:160,dur:.16,vol:.13*v});},
   ko:(ac,d,t,v)=>{sTone(ac,d,t,{type:'triangle',f0:640,f1:140,dur:.22,vol:.35*v});sNoise(ac,d,t,{f0:2600,q:3,dur:.16,vol:.3*v});sTone(ac,d,t+.06,{type:'triangle',f0:900,f1:300,dur:.14,vol:.15*v});},
   hurt:(ac,d,t,v)=>{sTone(ac,d,t,{type:'square',f0:320,f1:90,dur:.2,vol:.28*v});sNoise(ac,d,t,{ft:'lowpass',f0:800,dur:.12,vol:.45*v});},
@@ -1534,7 +1555,7 @@ function sfx(n,v,len,pan){if(!SET||!SET.sfx||(!SND[n]&&!SMP.map[n]))return;const
   const st=P.st;let n=null;if(launch&&st!=='hvr')n='launch';else if(w.spike)n='heavy';
   else if(st==='atk')n={jab:'pJab',cross:'pCross',fin:'pFin',upper:'pUpper',spin:w.away?'pSpin1':'pSpin2',dash:'pDash'}[P.mv];
   else if(st==='ajab'||st==='airp')n='pAirJab';else if(st==='akick')n='pKick';else if(st==='achase')n='pChase';else if(st==='upc')n='pUpper';else if(st==='dash')n='pDash';else if(st==='slland')n='pThud';else if(st==='hvr')n=w.dmg>=2?'heavy':'hit';
-  sfx(n||((w.fin||w.heavy)?'heavy':(w.dmg||1)>=2?'hit':'jab'));_h(o,w);
+  sfx(n||((w.fin||w.heavy)?'heavy':(w.dmg||1)>=2?'hit':'jab'));_h(o,w);if(['wnoise','wbrute','cbars','ctank'].includes(o.skin)&&o.hp>0)sfx('tvCrack',.7);
   if((hp0==null||hp0>0)&&o.hp<=0&&o.hp>-900)sfx(['wnoise','wbrute','cbars','ctank','eyetv','bigeye'].includes(o.skin)?'kotv':o.skin==='brute'?'brDead':o.skin==='crawler'?'crDead':o.skin==='hover'?'hvDead':!o.skin?'botDead':'ko');};}
 {const _h=hurtBy;hurtBy=function(o){const hp0=P.hp,sh=P.sh,ph=TRU.phT;const r=_h(o);if(P.hp<hp0)sfx('hurt');else if(TRU.phT!==ph)sfx('phase');else if(sh&&!P.sh)sfx(o&&o.brk?'shieldbreak':'block');return r;};}
 
@@ -1570,6 +1591,22 @@ function eauMake(type){const ac=SFX.ac,g=ac.createGain();g.gain.value=0;let out=
     s.connect(f);f.connect(g);add(s);L.f=f;const o=ac.createOscillator(),og=ac.createGain();o.type=type==='motor'?'square':'sine';o.frequency.value=type==='motor'?46:84;og.gain.value=type==='motor'?.12:.35;
     const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=300;o.connect(lp);lp.connect(og);og.connect(g);add(o);L.osc=[o];
     if(type==='hover'){const lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=3;lg.gain.value=180;lfo.connect(lg);lg.connect(f.frequency);add(lfo);}}
+  else if(type==='hiss'){const ns=()=>{const s=ac.createBufferSource();s.buffer=SFX.nb||sfxNoise(ac);s.loop=true;s.loopStart=Math.random()*.5;return s;};      // WHITE NOISE: a body of static that crackles
+    const n1=ns(),bp=ac.createBiquadFilter();bp.type='bandpass';bp.frequency.value=3800;bp.Q.value=.8;const g1=ac.createGain();g1.gain.value=.55;n1.connect(bp);bp.connect(g1);g1.connect(g);add(n1);
+    const n2=ns(),hp=ac.createBiquadFilter();hp.type='highpass';hp.frequency.value=5500;const cg=ac.createGain();cg.gain.value=0;n2.connect(hp);hp.connect(cg);cg.connect(g);add(n2);
+    const n3=ns(),fl=ac.createBiquadFilter();fl.type='lowpass';fl.frequency.value=18;const fg=ac.createGain();fg.gain.value=5;n3.connect(fl);fl.connect(fg);fg.connect(cg.gain);add(n3);L.mods=[{p:bp.frequency,b:3800}];}
+  else if(type==='glitch'){const o=ac.createOscillator();o.type='sawtooth';o.frequency.value=58;const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=260;const og=ac.createGain();og.gain.value=.4;   // GLITCH BRUTE: stomping buzz
+    const ch=ac.createGain();ch.gain.value=.5;o.connect(lp);lp.connect(og);og.connect(ch);ch.connect(g);add(o);
+    const lf=ac.createOscillator();lf.type='square';lf.frequency.value=2.2;const lg=ac.createGain();lg.gain.value=.5;lf.connect(lg);lg.connect(ch.gain);add(lf);
+    const q=ac.createOscillator();q.type='square';q.frequency.value=117;const bp=ac.createBiquadFilter();bp.type='bandpass';bp.frequency.value=900;bp.Q.value=4;const qg=ac.createGain();qg.gain.value=.05;q.connect(bp);bp.connect(qg);qg.connect(g);add(q);
+    const st=ac.createOscillator();st.type='sawtooth';st.frequency.value=11;const sg=ac.createGain();sg.gain.value=.05;st.connect(sg);sg.connect(qg.gain);add(st);L.mods=[{p:o.frequency,b:58},{p:q.frequency,b:117},{p:lf.frequency,b:2.2}];}
+  else if(type==='tone'){const lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=.6;lg.gain.value=7;lfo.connect(lg);add(lfo);L.mods=[];                               // COLOUR BARS: a soft wobbling test tone
+    for(const [ty,fr,v] of [['sine',440,.24],['sine',443,.24],['sine',880,.06],['triangle',110,.2]]){const o=ac.createOscillator();o.type=ty;o.frequency.value=fr;lg.connect(o.detune);const og=ac.createGain();og.gain.value=v;o.connect(og);og.connect(g);add(o);L.mods.push({p:o.frequency,b:fr});}}
+  else if(type==='tread'){const s=ac.createBufferSource();s.buffer=SFX.nb||sfxNoise(ac);s.loop=true;const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=160;lp.Q.value=2;const rg=ac.createGain();rg.gain.value=.6;  // BROADCAST TANK: treads + transformer hum
+    s.connect(lp);lp.connect(rg);rg.connect(g);add(s);const lf=ac.createOscillator();lf.type='square';lf.frequency.value=3;const lg=ac.createGain();lg.gain.value=.3;lf.connect(lg);lg.connect(rg.gain);add(lf);
+    const o=ac.createOscillator();o.type='sawtooth';o.frequency.value=41;const ol=ac.createBiquadFilter();ol.type='lowpass';ol.frequency.value=200;const og=ac.createGain();og.gain.value=.4;o.connect(ol);ol.connect(og);og.connect(g);add(o);
+    const h=ac.createOscillator();h.type='square';h.frequency.value=60;const hl=ac.createBiquadFilter();hl.type='lowpass';hl.frequency.value=240;const hg=ac.createGain();hg.gain.value=.1;h.connect(hl);hl.connect(hg);hg.connect(g);add(h);
+    L.mods=[{p:lp.frequency,b:160},{p:o.frequency,b:41},{p:lf.frequency,b:3}];}
   return L;}
 function eauKill(id){const L=EAU.loops[id];if(!L)return;delete EAU.loops[id];const ac=SFX.ac,t=ac.currentTime;try{L.g.gain.cancelScheduledValues(t);L.g.gain.setTargetAtTime(0,t,.06);}catch(e){}setTimeout(()=>{for(const n of L.n)try{n.stop();}catch(e){}try{L.g.disconnect();}catch(e){}},500);}
 function eauHcharge(on){if(on&&!EAU.hc){const r=smpSrc('s_hcharge',{loop:1,v:0});if(r){r.g.gain.setTargetAtTime(.75*Math.pow(SET.sfx/10,.0),SFX.ac.currentTime,.05);EAU.hc=r;}}
@@ -1588,11 +1625,16 @@ function eauStep(){if(!SFX.ac||SFX.ac.state!=='running'||!SET.sfx){for(const id 
       if(o.st==='crawl'||o.st==='scuttle'){const [k,p]=eauFall(o);if(k>.02)want.push({id:o,type:o.st==='crawl'?'s_cr_wire':'s_cr_scut',v:(o.st==='crawl'?.5:.6)*k,p,f:1});}}
     else if(sk==='hover'){if(ev){if(o.st==='charge')sfxAt('hvCharge',o);if(o.st==='fire')sfxAt('hvFire',o);if(o.st==='slam')sfxAt('hvSlam',o);}
       if(o.st!=='dead'){const [k,p]=eauFall(o);if(k>.02)want.push({id:o,type:'s_hv_loop',v:.5*k,p,f:o.st==='charge'?1.2:1});}}
-    else if(sk==='cbars'||sk==='ctank'){if(ev&&o.st==='charge')sfxAt('bcharge',o,sk==='ctank'?1:.7);}}
+    else if(sk==='wnoise'){if(ev){if(o.st==='wind')sfxAt('wnWind',o);if(o.st==='lunge')sfxAt('wnLunge',o);if(o.st==='dead')sfxAt('wnDead',o);}
+      if(o.st!=='dead'){const [k,p]=eauFall(o),vis=Math.max(.12,o.vis||0);if(k>.02)want.push({id:o,type:'hiss',v:(.05+.24*vis)*k*(o.st==='lunge'?1.6:1),p,f:o.st==='stalk'?1.15:o.st==='wind'?1.35:o.st==='lunge'?1.5:1});}}
+    else if(sk==='wbrute'){if(ev){if(o.st==='stalk'&&ps==='lurk')sfxAt('wbAlert',o);if(o.st==='wind')sfxAt('wbWind',o);if(o.st==='lunge')sfxAt('wbLunge',o);if(o.st==='dead')sfxAt('wbDead',o);}
+      if(o.st==='stalk'||o.st==='lurk'){const [k,p]=eauFall(o);if(k>.02)want.push({id:o,type:'glitch',v:(o.st==='stalk'?.5:.16)*k,p,f:o.st==='stalk'?1:.8});}}
+    else if(sk==='cbars'||sk==='ctank'){const tk=sk==='ctank';if(ev){if(o.st==='charge')sfxAt(tk?'tkCharge':'cbCharge',o);if(o.st==='dead')sfxAt(tk?'tkDead':'cbDead',o);}
+      if(o.st!=='dead'){const [k,p]=eauFall(o);if(k>.02)want.push({id:o,type:tk?'tread':'tone',v:(tk?.38:.2)*k,p,f:o.st==='charge'?(tk?1.25:1.5):o.st==='fire'?(tk?1.1:1.2):1});}}}
   want.sort((a,b)=>b.v-a.v);const keep=new Set();
   for(const w of want.slice(0,4)){let L=EAU.loops[w.id&&w.id.id||w.id];const key=(w.id.id||'')+w.type+(w.id.x!=null?'':'');if(!w.id._lk)w.id._lk='L'+Math.random().toString(36).slice(2);const id=w.id._lk;keep.add(id);
     L=EAU.loops[id];if(L&&L.type!==w.type){eauKill(id);L=null;}if(!L)L=EAU.loops[id]=eauMake(w.type);if(L.src)L.src.playbackRate.setTargetAtTime(w.f,now,.1);L.g.gain.setTargetAtTime(w.v,now,.08);if(L.p)L.p.pan.setTargetAtTime(w.p,now,.08);
-    if(L.osc)L.osc.forEach((o,i)=>{const base=w.type==='orb'?[176,179,352][i]:w.type==='motor'?46:84;o.frequency.setTargetAtTime(base*w.f,now,.1);});if(L.f&&w.type==='motor')L.f.frequency.setTargetAtTime(220*w.f,now,.1);}
+    if(L.osc)L.osc.forEach((o,i)=>{const base=w.type==='orb'?[176,179,352][i]:w.type==='motor'?46:84;o.frequency.setTargetAtTime(base*w.f,now,.1);});if(L.f&&w.type==='motor')L.f.frequency.setTargetAtTime(220*w.f,now,.1);if(L.mods)L.mods.forEach(m=>m.p.setTargetAtTime(m.b*w.f,now,.1));}
   for(const id in EAU.loops)if(!keep.has(id))eauKill(id);}
 {const _u=updateBots;updateBots=function(dt){_u(dt);try{eauStep();}catch(e){}};}
 (function eauWatch(){if(SFX.ac&&(scene!=='play'||paused||OVER||won||performance.now()-EAU.t>150)){for(const id in EAU.loops)eauKill(id);eauHcharge(false);if(TSA.on||TSA.loop){tsaStop(TSA.on);tsaStop(TSA.loop);TSA.on=TSA.loop=null;}}requestAnimationFrame(eauWatch);})();
