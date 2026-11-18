@@ -1039,7 +1039,7 @@ function muToast(){const k=G-MU.toastT;if(k<0||k>3.4||paused)return;if(!MU.init)
 const SHDB={diamond:{img:'shirt',fs:52,short:'FOREVER',sp:'DIAMOND',where:['THE DARK ROOM','AFTER ACT 1-2'],pw:[
     {n:'DIAMOND SHIELD',k:['','',''],d:'SOAKS UP ONE HIT, THEN GROWS BACK IN 6 SECONDS. SHIELD BREAKERS SMASH IT (12 SECONDS).'},
     {n:'SHARD THROW',k:['HOLD Z','HOLD [X]','HOLD PUNCH'],d:'YOUR HEAVY ATTACK FIRES DIAMOND SHARDS. CHARGE LONGER FOR MORE SHARDS.'}]},
-  onyx:{img:'shirt2',fs:64,short:'ONYX LS',sp:'SIGHT+DASH',where:['THE EYE','END OF ACT 1'],pw:[
+  onyx:{img:'shirt2',fs:64,short:'AFTER DARK',sp:'SIGHT+DASH',where:['THE EYE','END OF ACT 1'],pw:[
     {n:'TRUE SIGHT',k:['HOLD E','HOLD [R3]','TAP THE EYE'],d:'SEE WHAT IS REAL: HIDDEN CASH SHOWS UP AND FAKE EYES FADE AWAY.'},
     {n:'SHADOW DASH',k:['A','[B]','DASH'],d:'WHILE DASHING YOU TURN TO SHADOW. ENEMIES AND BOLTS PASS RIGHT THROUGH YOU.'}]}};
 const SHV={sel:0,t0:0};
@@ -2600,7 +2600,7 @@ function eyeHUD(){const E=EYE;if(CUR!=='eye')return;if(E.card){eyeCard();return;
   if(E.ph==='free'){let lab=null;if(E.sh)lab=Math.abs(P.x-E.sh.x)<70?null:null;else if(E.near)lab={portal:PR('UP: ENTER THE PORTAL','[LS] UP: ENTER THE PORTAL','PAD UP: ENTER THE PORTAL'),leave:PR('UP: BACK TO THE CHILL SPOT','[LS] UP: CHILL SPOT','PAD UP: CHILL SPOT'),climb:PR('UP: CLIMB + FIGHT AGAIN','[LS] UP: FIGHT AGAIN','PAD UP: FIGHT AGAIN')}[E.near];
     if(lab){const w=tpW(lab)+12,b=Math.round(Math.sin(G*4)*1.5);px(CX-w/2,186+b,w,13,'rgba(10,4,32,.9)');px(CX-w/2,186+b,w,1,'#ff9be8');px(CX-w/2,198+b,w,1,'#ff9be8');TP(lab,CX,196+b,8,'#ff9be8','center');}
     const n=G-E.note;if(n>.4&&n<7){ctx.globalAlpha=n<.8?(n-.4)/.4:n>6.4?(7-n)/.6:1;px(30,70,W-60,46,'rgba(10,4,30,.9)');px(30,70,W-60,1,'#ff4d6d');px(30,115,W-60,1,'#ff4d6d');
-      T('NEW SHIRT:  ONYX LONG SLEEVE',CX,82,8,'#ffffff','center');T(PR('HOLD E','HOLD [R3]','TAP THE EYE ICON')+'  -  TRUE SIGHT: SEE WHAT IS REAL',CX,94,8,'#ff9bb0','center');T('DASH  -  PASS THROUGH ANYTHING',CX,104,8,'#ff9bb0','center');T(PR('Q','[L3]','TAP THE SHIRT ICON')+'  -  SWAP SHIRTS',CX,112,8,'#8fe0ff','center');ctx.globalAlpha=1;}}
+      T('NEW SHIRT:  AFTER DARK',CX,82,8,'#ffffff','center');T(PR('HOLD E','HOLD [R3]','TAP THE EYE ICON')+'  -  TRUE SIGHT: SEE WHAT IS REAL',CX,94,8,'#ff9bb0','center');T('DASH  -  PASS THROUGH ANYTHING',CX,104,8,'#ff9bb0','center');T(PR('Q','[L3]','TAP THE SHIRT ICON')+'  -  SWAP SHIRTS',CX,112,8,'#8fe0ff','center');ctx.globalAlpha=1;}}
   if(!(E.ph==='p1'||E.ph==='p2'||E.ph==='trans'))return;const w=150,x=CX-w/2,y=208,k=Math.max(0,E.hp/E.max);
   T(E.ph==='p1'?'THE EYE  -  FIND THE REAL ONE':'THE EYE',CX,y-3,8,'#ff9be8','center');px(x-1,y-1,w+2,7,'#12020a');px(x,y,w,5,'#3a1030');px(x,y,Math.round(w*k),5,E.ph==='p1'?'#ff5ee8':'#ff4d6d');px(x,y,Math.round(w*k),1,'#ffd0f0');
   px(x+w+4,y,5,5,'#ff5ee8');px(x+w+11,y,5,5,E.ph==='p1'?'#3a1030':'#ff4d6d');}
@@ -2915,7 +2915,7 @@ function drawStoreTalk(){const T_=BOSS.talk,L=T_.lines[T_.i],c=L[0]==='C',who=c?
   {const Z=LEVEL.zoom||1,sx=Math.round(((c?BF.CLX:P.x)-camX)*Z);px(Math.max(14,Math.min(304,sx))-3,98,7,3,col);px(Math.max(14,Math.min(304,sx))-1,101,3,2,col);}}
 
 // ================= SHIRTS: each one is a power. add a new shirt by adding an entry here + its hooks =================
-const SHIRTS={diamond:{name:'FOREVER CHANGING',power:'DIAMOND FORM',col:'#8fe0ff',desc:'diamond shield blocks a hit. heavy attack throws shards.'},onyx:{name:'ONYX LONG SLEEVE',power:'TRUE SIGHT + SHADOW DASH',col:'#ff4d6d',desc:'hold to see what is real. dash straight through danger.'}};
+const SHIRTS={diamond:{name:'FOREVER CHANGING',power:'DIAMOND FORM',col:'#8fe0ff',desc:'diamond shield blocks a hit. heavy attack throws shards.'},onyx:{name:'AFTER DARK',power:'TRUE SIGHT + SHADOW DASH',col:'#ff4d6d',desc:'hold to see what is real. dash straight through danger.'}};
 const SHIRT_OWN_K='stt_shirts',SHIRT_ON_K='stt_shirt_on';
 let SH_OWN=(()=>{try{const a=JSON.parse(localStorage.getItem(SHIRT_OWN_K)||'[]');if(localStorage.getItem('stt_shirt')==='1'&&!a.includes('diamond'))a.push('diamond');return a;}catch(e){return [];}})();
 let SH_ON=(()=>{try{const v=localStorage.getItem(SHIRT_ON_K);return v&&SH_OWN.includes(v)?v:(SH_OWN[0]||null);}catch(e){return null;}})();
