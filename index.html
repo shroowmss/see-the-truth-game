@@ -2408,6 +2408,17 @@ Object.assign(SMPD,{s_ad_aura2:'data:audio/wav;base64,UklGRlT8AQBXQVZFZm10IBAAAA
 const AURA=['s_ad_aura','s_ad_aura2','s_ad_aura3'];
 function adAuraLoop(on,g){if(on&&!ADSS.auK){const ok=AURA.filter(k=>SMP.buf[k]&&k!==ADSS.auLast);ADSS.auK=ok.length?ok[Math.floor(Math.random()*ok.length)]:'s_ad_aura';ADSS.auLast=ADSS.auK;}
   if(ADSS.auK){shLoop(ADSS.auK,on,g);if(!on)ADSS.auK=null;}}
+// ---- AFTER DARK eye glow: a sting every time his eyes light up red (idle wait, strong heavy charge, finisher, turn strike)
+Object.assign(SND,{adEyes:(ac,d,t,v)=>{sWarble(ac,d,t,{type:'sawtooth',f0:55,f1:62,dur:.7,vol:.07*v,rate:24,depth:3,att:.12});sNoise(ac,d,t,{f0:2400,f1:5200,q:6,dur:.55,vol:.05*v,att:.15});
+    sWarble(ac,d,t+.08,{f0:1320,f1:1480,dur:.5,vol:.035*v,rate:11,depth:25,att:.1});sTone(ac,d,t,{f0:880,f1:660,dur:.25,vol:.03*v,att:.05});},
+  adEyeFlash:(ac,d,t,v)=>{sTone(ac,d,t,{type:'square',f0:1800,f1:900,dur:.09,vol:.05*v});sNoise(ac,d,t,{f0:4000,f1:7000,q:4,dur:.1,vol:.08*v});sTone(ac,d,t,{f0:90,f1:50,dur:.1,vol:.3*v});}});
+Object.assign(SMP.map,{adEyes:'s_ad_eyes',adEyeFlash:'s_ad_eyeflash'});Object.assign(SMP.vol,{adEyes:.55,adEyeFlash:.55});
+const ADEYE={k:''};
+{const _st=adSmpStep;adSmpStep=function(){_st();if(scene!=='play'||paused||!(typeof AD_ON==='function'&&AD_ON())){ADEYE.k='';return;}
+  const r=playAnim(),n=r[0],k=Math.floor(fidx(n,r[1])),key=n+':'+k;if(key===ADEYE.k)return;const prev=ADEYE.k;ADEYE.k=key;const i=Math.floor(r[1]);
+  if(n==='ad_wait'&&i===6)sfx('adEyes',.9);
+  else if(n==='ad_hcharge'&&i===8&&!prev.startsWith('ad_hcharge:'+(k)))sfx('adEyes',.7);
+  else if((n==='ad_combo'&&i===11)||(n==='ad_spin'&&i===10))sfx('adEyeFlash',1);};}
 /*SFXEND*/
 
 /*ACT2JS*/
