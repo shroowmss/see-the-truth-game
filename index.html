@@ -219,7 +219,7 @@ const keys={},hit={};let G=0,scene='title',s0=0,trans=null,menuOpen=false,sel=0,
 const hasSave=()=>{try{return localStorage.getItem('stt_save')==='1';}catch(e){return false;}};
 const doSave=()=>{try{localStorage.setItem('stt_save','1');}catch(e){}};
 function go(to){if(trans)return;trans={to,t:0,sw:0};}
-function enterScene(s){s0=G;fx.length=0;paused=false;if(s==='cutscene')cs={i:0,tl:0};if(s==='select')PLAYLV=null;if(s==='play'){const kp=NEXTLV?[cash,RUN.t,RUN.hits,RUN.kos,P.hp]:null;if(!NEXTLV&&!PLAYLV&&(LEVELS[lsel]||{}).id==='boss'&&eyeDone()&&!EYE.rematch)NEXTLV='eye';loadLevel(NEXTLV||PLAYLV||(LEVELS[lsel]||LEVELS[0]).id);NEXTLV=null;resetPlay();EYEKP=kp;if(kp){EYE_DEATHS=0;cash=kp[0];RUN.t=kp[1];RUN.hits=kp[2];RUN.kos=kp[3];P.hp=Math.max(1,kp[4]);}doSave();}if(s==='title'){menuOpen=false;sel=0;if(titleSkip){titleSkip=false;s0=G-3;menuOpen=true;sel=TSEL;TSEL=2;}}if(s==='select'){SUB.open=0;SUB.ride=0;mapEnter();}if(s==='chill')chillEnter();if(s==='void')voidEnter();
+function enterScene(s){if(typeof MOUSE_CAM!=="undefined")MOUSE_CAM.active=false;s0=G;fx.length=0;paused=false;if(s==='cutscene')cs={i:0,tl:0};if(s==='select')PLAYLV=null;if(s==='play'){const kp=NEXTLV?[cash,RUN.t,RUN.hits,RUN.kos,P.hp]:null;if(!NEXTLV&&!PLAYLV&&(LEVELS[lsel]||{}).id==='boss'&&eyeDone()&&!EYE.rematch)NEXTLV='eye';loadLevel(NEXTLV||PLAYLV||(LEVELS[lsel]||LEVELS[0]).id);NEXTLV=null;resetPlay();EYEKP=kp;if(kp){EYE_DEATHS=0;cash=kp[0];RUN.t=kp[1];RUN.hits=kp[2];RUN.kos=kp[3];P.hp=Math.max(1,kp[4]);}doSave();}if(s==='title'){menuOpen=false;sel=0;if(titleSkip){titleSkip=false;s0=G-3;menuOpen=true;sel=TSEL;TSEL=2;}}if(s==='select'){SUB.open=0;SUB.ride=0;mapEnter();}if(s==='chill')chillEnter();if(s==='void')voidEnter();
   LIGHT=s==='title'?1:s==='cutscene'?.45:s==='act'?.5:s==='play'?.22:0;}
 const MENU=['NEW GAME','CONTINUE','LEVEL SELECT'];
 let wipeT=-9;
@@ -385,6 +385,20 @@ const MV={sprint:170,slideV:158,slideDec:175,slideMin:42,slideMax:.8,run:110,acc
   crawl:32,back:46,punchMove:.35,landLock:.08};
 const P={x:SX,y:SY,vx:0,vy:0,face:1,st:'idle',t:0,air:false,hp:3,inv:0,fl:0,qs:0,jb:0,coy:0,jhold:false,gy:SY,look:20,snap:1},orbs=[];
 let camX=0,camY=0,camXf=0,camYf=0;
+// Optional mouse-look camera. No mouse movement = the original follow-camera.
+// The pointer only changes the view: it never moves Onyx or triggers actions.
+const MOUSE_CAM={active:false,x:0,y:0};
+cv.addEventListener('mousemove',e=>{
+  if(scene!=='play'||paused||e.buttons){MOUSE_CAM.active=false;return;}
+  const r=cv.getBoundingClientRect();
+  if(!r.width||!r.height)return;
+  // Normalize to -1..1; a mouse at screen center gives the default view.
+  MOUSE_CAM.x=Math.max(-1,Math.min(1,((e.clientX-r.left)/r.width-.5)*2));
+  MOUSE_CAM.y=Math.max(-1,Math.min(1,((e.clientY-r.top)/r.height-.5)*2));
+  MOUSE_CAM.active=true;
+});
+cv.addEventListener('mouseleave',()=>{MOUSE_CAM.active=false;});
+
 function resetPlay(){Object.assign(P,{x:SX,y:SY,vx:0,vy:0,face:1,st:'idle',t:0,air:false,hp:MAXHP(),inv:0,fl:0,qs:0,jb:0,coy:0,jhold:false,gy:SY,look:20,snap:1});CRIB.tw=null;CRIB.look=null;CRIB.near=null;CRIB.talk=null;chk.x=SX;chk.y=SY;won=false;OVER=null;WIN=null;RUN.t=0;RUN.hits=0;RUN.kos=0;RUN.wind=0;orbs.length=0;
   cash=0;found=0;pops=[];clouds=[];baits=[];drops=[];IMP=null;P.ghosts=[];P.airDash=0;P.dashCD=0;resetSecrets();initSolid();resetPickups();buildLevel();
   spawnBots();r13Spawn();d21Spawn();d22Spawn();bossReset();diaReset();if(CUR==='1-1')ORB_DEF.forEach(([a,b,r])=>orbs.push({x:a*TS+8,a:a*TS+8,b:b*TS+8,y:r*TS-30,y0:r*TS-30,d:1,alive:true,p:rnd()*6,daze:0,lure:0}));   // act 1-1 keeps its purple orbs
@@ -539,7 +553,11 @@ function updateCam(dt){
   const Z=LEVEL.zoom||1,VW=W/Z,VH=H/Z;
   const lookT=Math.abs(P.vx)>30?Math.sign(P.vx)*46:P.face*22;P.look+=(lookT-P.look)*Math.min(1,dt*2.2);
   const T1=150/Z,T2=64/Z,T3=196/Z;let ty=P.gy-T1;const sy=P.y-camYf;if(sy<T2)ty=P.y-T2;else if(sy>T3)ty=P.y-T3;
-  const tx=P.x-VW/2+P.look,cl=(v,a)=>Math.min(a,Math.max(0,v));
+  const mouseLook=MOUSE_CAM.active&&scene==='play'&&!paused&&!trans&&!won&&!OVER&&!BOSS.lock;
+  const mx=mouseLook?MOUSE_CAM.x*Math.min(90,VW*.3):0;
+  const my=mouseLook?MOUSE_CAM.y*Math.min(48,VH*.22):0;
+  const tx=P.x-VW/2+P.look+mx;ty+=my;
+  const cl=(v,a)=>Math.min(Math.max(0,a),Math.max(0,v));
   if(P.snap){camXf=cl(P.x-VW/2,MW*TS-VW);camYf=cl(P.y-T1,MH*TS-VH);P.snap=0;}
   camXf+=(cl(tx,MW*TS-VW)-camXf)*Math.min(1,dt*7);camYf+=(cl(ty,MH*TS-VH)-camYf)*Math.min(1,dt*(sy>T3||sy<T2?10:4));
   camX=Math.round(camXf);camY=Math.round(camYf);CAMX=camX;}
@@ -4719,7 +4737,7 @@ addEventListener('keydown',e=>{
   keyboardMappedDown(e.code);
 });
 addEventListener('keyup',e=>keyboardMappedUp(e.code));
-addEventListener('blur',()=>{keyboardHeld.clear();for(const k in keys)keys[k]=0;setPause(true);});
+addEventListener('blur',()=>{MOUSE_CAM.active=false;keyboardHeld.clear();for(const k in keys)keys[k]=0;setPause(true);});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)setPause(true);});
 // ---- touch controls
 function setTouch(){INPUT='touch';if(TOUCH)return;TOUCH=true;document.body.classList.add('touch');}
