@@ -4349,7 +4349,7 @@ function drawTitleScene(){
     else{MENU.forEach((m,i)=>{const [bx,by]=B[i],s=i===sel,dis=i===1&&!hasSave();
         if(s)taGlow(CX,by+9,60,'255,40,80',.12+.07*Math.sin(G*6));
         ctx.drawImage(taFrame(s?'fred':'fpur'),OX+bx,by);
-        ctx.drawImage(taTint(['tng','tco','tls'][i],s?(dis?'#ff8aa0':'#fff4fb'):(dis?'#6a5a8a':'#c9c0e8')),OX+bx+TA.rects[['tng','tco','tls'][i]][4],by+TA.rects[['tng','tco','tls'][i]][5]);});
+        if(i<3)ctx.drawImage(taTint(['tng','tco','tls'][i],s?(dis?'#ff8aa0':'#fff4fb'):(dis?'#6a5a8a':'#c9c0e8')),OX+bx+TA.rects[['tng','tco','tls'][i]][4],by+TA.rects[['tng','tco','tls'][i]][5]);else T(m,OX+bx+49,by+13,8,s?'#fff4fb':'#c9c0e8','center','#12042c');});
       // arrows glide to the new button, then every few seconds do a full 360 (and spin right away when the selection changes)
       if(TARR.sel!==sel){TARR.from=TARR.y==null?B[sel][1]:TARR.y;TARR.sel=sel;TARR.t0=G;}
       const mv=Math.min(1,(G-TARR.t0)/.16),ey=1-(1-mv)*(1-mv);TARR.y=TARR.from+(B[sel][1]-TARR.from)*ey;
@@ -4644,13 +4644,14 @@ cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect(),x=(e.cl
   if(paused&&pview==='music'){muListTap(x,y);return;}
   if(paused&&pview==='shirts'){shTap(x,y);return;}
   if(paused&&pview==='settings'){setTap(x,y);return;}
+  if(paused&&pview==='training'){trTap(x,y);return;}
   if(paused){if(pview==='controls'){pview=SETV.ret||'menu';SETV.ret='menu';return;}if(y>=PL.py+8&&y<PL.py+34&&x>PL.px+12&&x<PL.px+PL.pw-12){if(x<PL.px+38)muSkip(-1);else if(x>PL.px+PL.pw-38)muSkip(1);else muToggle();return;}const i=Math.floor((y-PL.py-PL.rowY)/PL.rowS);if(x>PL.px&&x<PL.px+PL.pw&&i>=0&&i<PMENU.length&&(y-PL.py-PL.rowY)%PL.rowS<PL.rowH){psel=i;pauseChoose();}return;}
   if(ACTSW)return;if(scene==='guide'){guideTap(x,y);return;}if(scene==='deadair'){daTap(x,y);return;}
   if(scene==='select'&&act2Open()&&!SUB.open&&x>=W-68&&y>=22&&y<40){actSwitch('guide');return;}
   if(scene==='select'){mapTap(x,y);return;}
   if(scene==='chill'){chillTap(x,y);return;}
   if(scene==='void'){voidTap(x,y);return;}
-  if(scene==='title'){const onBtn=x>108&&x<212&&y>136&&y<200;if(menuOpen&&onBtn){sel=y<158?0:y<178?1:2;choose();}else if(!menuOpen&&G-s0>2.7&&x>108&&x<212&&y>156&&y<182)confirm();else{menuOpen=false;s0=G;TARR.sel=-1;}}else confirm();});
+  if(scene==='title'){const onBtn=x>108&&x<212&&y>136&&y<219;if(menuOpen&&onBtn){sel=y<158?0:y<178?1:y<197?2:3;choose();}else if(!menuOpen&&G-s0>2.7&&x>108&&x<212&&y>156&&y<182)confirm();else{menuOpen=false;s0=G;TARR.sel=-1;}}else confirm();});
 // ---- touch layout: every control can be dragged anywhere (saved per orientation), plus a global size
 const PADK='stt_pad3_',PAD={edit:false,L:null};
 const padOrient=()=>innerWidth>innerHeight?'land':'port';
@@ -4708,6 +4709,83 @@ function begin(){
   const fonts=document.fonts&&document.fonts.load?Promise.race([document.fonts.load('16px "Press Start 2P"'),new Promise(r=>setTimeout(r,1500))]):Promise.resolve();
   fonts.then(()=>{initEmblem();buildTitle();enterScene('title');last=performance.now();requestAnimationFrame(frame);});
 }
+
+// ================= TRAINING ROOM: practise combos on any enemy, aggression on/off, infinite HP, combo + damage readout =================
+LEVEL_DATA.tr={mw:44,mh:36,ground:30,rects:[[0,30,44,6],[0,0,1,30],[43,0,1,30]],secrets:[],hgold:[],cash:[],orbs:[],checks:[[8,30]],start:[8,30],goal:[9999,0],lifa:[9999,0],wires:[[0,0,0]],crawlers:[],hovers:[]};   // the crawler looks up a power line even on the ground; give it an unused one
+LVX.tr={id:'tr',label:'TRAINING',name:'THE GYM'};
+const TRE=[{k:'bot',n:'ROBOT',a:1},{k:'brute',n:'BRUTE',a:1},{k:'crawler',n:'CRAWLER',a:1},{k:'hover',n:'HOVER DRONE',a:1},
+  {k:'wnoise',n:'STATIC',a:2},{k:'wbrute',n:'STATIC BRUTE',a:2},{k:'cbars',n:'COLOR BARS',a:2},{k:'ctank',n:'TEST TANK',a:2}];
+const TR={on:false,ei:0,n:1,aggro:true,inf:true,combo:0,cdmg:0,best:0,last:-9,ended:-9,sel:0,respT:0,pm:null};
+try{const s=JSON.parse(localStorage.getItem('stt_tr')||'null');if(s){TR.ei=Math.max(0,Math.min(TRE.length-1,s.ei|0));TR.n=Math.max(1,Math.min(3,s.n|0||1));TR.aggro=s.aggro!==false;TR.inf=s.inf!==false;TR.best=s.best|0;}}catch(e){}
+function trSave(){try{localStorage.setItem('stt_tr',JSON.stringify({ei:TR.ei,n:TR.n,aggro:TR.aggro,inf:TR.inf,best:TR.best}));}catch(e){}}
+function trMake(k,x,i){const F=30*TS,b={kind:'bot',id:'t'+i+'_'+Math.floor(G*100),x,y:F,a:x-72,b:x+72,face:P.x<x?-1:1,t:Math.random(),alive:true,fl:0,kx:0,daze:0};
+  if(k==='bot')return Object.assign(b,{st:'roll',hp:6,hpMax:6,turn:1});
+  if(k==='brute')return Object.assign(b,{skin:'brute',st:'roll',hp:5,hpMax:5,turn:1});
+  if(k==='crawler')return Object.assign(b,{skin:'crawler',st:'scuttle',mode:'ground',wi:0,hp:3,hpMax:3,vy:0,cd:1.5});
+  if(k==='hover')return Object.assign(b,{skin:'hover',y:F-40,hx:x,hy:F-40,st:'hover',hp:6,hpMax:6,cd:1.2+i*.4,dir:i%2?1:-1});
+  if(k==='wnoise'||k==='wbrute'){const M=WNM[k];return Object.assign(b,{skin:k,st:'lurk',hp:M.hp,hpMax:M.hp,cd:1,vis:k==='wbrute'?1:.15,hit:0});}
+  const M=CBM[k];return Object.assign(b,{skin:k,hy:F,st:'hover',dir:i%2?1:-1,hp:M.hp,hpMax:M.hp,cd:1+i*.5,vy:0});}
+function trSpawn(){botsA=[];const k=TRE[TR.ei].k;for(let i=0;i<TR.n;i++)botsA.push(trMake(k,Math.min(MW*TS-60,P.x+120+i*40),i));TR.respT=0;
+  for(const o of botsA)for(let j=0;j<8;j++)spark(o.x,o.y-20,1,['#fff','#ff5ee8','#2fd8ff'],70);}
+function trReset(){resetPlay();trSpawn();TR.combo=0;TR.cdmg=0;TR.last=-9;pop(P.x,P.y-60,'RESET','#8ff0ff');}
+const TR_PM=['RESUME','TRAINING','SETTINGS','SHIRTS','MUSIC','RESET ROUND','QUIT TO TITLE'];
+function trMenu(on){if(on){if(!TR.pm)TR.pm=PMENU.slice();PMENU.length=0;PMENU.push(...TR_PM);}else if(TR.pm){PMENU.length=0;PMENU.push(...TR.pm);TR.pm=null;}}
+// enter / leave
+{const _e=enterScene;enterScene=function(s){const keep=(()=>{try{return localStorage.getItem('stt_save');}catch(e){return null;}})();_e(s);const tr=s==='play'&&CUR==='tr';
+  if(tr){TR.on=true;trMenu(true);trSpawn();try{if(keep==null)localStorage.removeItem('stt_save');else localStorage.setItem('stt_save',keep);}catch(e){}}
+  else if(TR.on||TR.pm){TR.on=false;trMenu(false);if(s!=='play')PLAYLV=PLAYLV==='tr'?null:PLAYLV;}};}
+MENU.push('TRAINING');TA.btn.push([120,198]);
+{const _c=choose;choose=function(){if(MENU[sel]==='TRAINING'){PLAYLV='tr';NEXTLV=null;go('play');return;}return _c();};}
+// aggression off: enemies stay put and never attack, but still flinch, get launched and juggle
+const TR_ATK=['alert','charge','stalk','wind','lunge','rec','fire','shoot','leap','pounce','zap','beam','aim','dash','rush','attack','slam','spin','jump','drop','alertA'];
+const TR_IDLE={brute:'roll',crawler:'scuttle',hover:'hover',wnoise:'lurk',wbrute:'lurk',cbars:'hover',ctank:'hover'};
+{const _u=updateBots;updateBots=function(dt){if(!TR.on||TR.aggro)return _u(dt);const keep=botsA.map(o=>[o.x,o.y,o.st]);_u(dt);
+  botsA.forEach((o,i)=>{if(!o.alive||o.jug||!keep[i])return;const idle=TR_IDLE[o.skin]||'roll';if(TR_ATK.includes(o.st)){o.st=idle;o.t=0;o.hit=1;}
+    if(o.st===idle){o.x=keep[i][0];o.y=keep[i][1];o.face=P.x<o.x?-1:1;}if(o.vis!=null)o.vis=1;});};}
+{const _h=hurtBy;hurtBy=function(o){if(TR.on&&!TR.aggro)return false;return _h(o);};}
+// infinite HP + the readout
+{const _h=hitOrb;hitOrb=function(o,w){if(!TR.on||!o)return _h(o,w);const d=(w&&w.dmg)||1;if(TR.inf&&o.hp!=null&&o.hp<=d)o.hp=(o.hpMax||6)+d;const h0=o.hp;const r=_h(o,w);
+  const dmg=h0!=null&&o.hp!=null?Math.max(0,h0-o.hp):d;if(G-TR.last<1.1)TR.combo++;else{TR.combo=1;TR.cdmg=0;}TR.cdmg+=dmg;TR.last=G;TR.ended=-9;
+  if(TR.combo>TR.best){TR.best=TR.combo;trSave();}if(TR.inf&&o.hp!=null&&o.hp<=0)o.hp=o.hpMax||6;return r;};}
+function trStep(){if(!TR.on||paused)return;if(TR.inf){P.hp=Math.max(P.hp,MAXHP());}
+  if(OVER){OVER=null;trReset();return;}
+  if(TR.combo>0&&G-TR.last>=1.1&&TR.ended<TR.last){TR.ended=G;if(TR.combo>1)pop(P.x,P.y-66,TR.combo+' HIT COMBO','#ffe66d');}
+  if(!botsA.some(o=>o.alive)){TR.respT+=1/60;if(TR.respT>1.2)trSpawn();}}
+{const _d=drawPlay;drawPlay=function(dt){_d(dt);if(!TR.on)return;trStep();if(paused)return;
+  // top banner: what you're fighting and how
+  const e=TRE[TR.ei],lab=e.n+(TR.n>1?' x'+TR.n:'');px(CX-80,22,160,22,'rgba(10,4,32,.72)');px(CX-80,22,160,1,'#ff5ee8');
+  T(lab,CX,32,8,'#ffffff','center');T((TR.aggro?'FIGHTS BACK':'PASSIVE')+'  -  '+(TR.inf?'INFINITE HP':'NORMAL HP'),CX,41,8,TR.aggro?'#ff8aa0':'#8ff0ff','center');
+  // combo counter
+  const live=G-TR.last<1.1,show=live||G-TR.last<2.4;
+  if(show&&TR.combo>0){const a=live?1:Math.max(0,1-(G-TR.last-1.1)/1.3),x=W-14;ctx.globalAlpha=a;const pul=live&&G-TR.last<.12?1:0;
+    T(String(TR.combo),x,92-pul,24,TR.combo>=10?'#ff5ee8':TR.combo>=5?'#ffe66d':'#ffffff','right','#12042c');T('HITS',x,104,8,'#c9c0e8','right','#12042c');
+    T('DMG '+TR.cdmg,x,116,8,'#8ff0ff','right','#12042c');if(live){const k=1-(G-TR.last)/1.1;px(x-40,121,Math.round(40*k),2,'#ff5ee8');}ctx.globalAlpha=1;}
+  T('BEST '+TR.best,W-14,134,8,'#7a6aa0','right','#12042c');
+  const p=PR('R: RESET   P: TRAINING OPTIONS','[MENU] TRAINING OPTIONS','II: TRAINING OPTIONS');if(p)TP(p,CX,H-8,8,'#7a6aa0','center');};}
+// pause menu: TRAINING page + RESET ROUND
+{const _p=pauseChoose;pauseChoose=function(){const c=PMENU[psel];if(TR.on&&c==='TRAINING'){pview='training';TR.sel=0;return;}if(TR.on&&c==='RESET ROUND'){setPause(false);trReset();return;}return _p();};}
+const TRROWS=[{l:'ENEMY',t:'pick'},{l:'HOW MANY',t:'num'},{l:'AGGRESSION',t:'tog',k:'aggro'},{l:'INFINITE HP',t:'tog',k:'inf'},{l:'RESET ROUND',t:'go'},{l:'BACK TO TRAINING',t:'back'}];
+function trAdj(i,d){const r=TRROWS[i];if(r.t==='pick'){TR.ei=(TR.ei+d+TRE.length)%TRE.length;trSpawn();}else if(r.t==='num'){TR.n=Math.max(1,Math.min(3,TR.n+d));trSpawn();}else if(r.t==='tog'){TR[r.k]=!TR[r.k];}else return;ui('uiTick');trSave();}
+function trChoose(i){const r=TRROWS[i];if(r.t==='go'){setPause(false);trReset();}else if(r.t==='back')setPause(false);else if(r.t==='tog')trAdj(i,1);else trAdj(i,1);}
+function drawTraining(){ctx.imageSmoothingEnabled=false;ctx.drawImage(PSNAP,0,0);ctx.fillStyle='rgba(8,3,22,.94)';ctx.fillRect(0,0,W,H);
+  prr(76,12,16,16,4,'#ff5ee8');px(80,19,8,2,'#fff');px(79,17,2,6,'#fff');px(87,17,2,6,'#fff');
+  T('TRAINING',98,24,8,'#ffffff','left');px(8,33,W-16,1,'#8e8e93');
+  TRROWS.forEach((r,i)=>{const y=40+i*25,s=i===TR.sel;px(16,y,W-32,21,s?'rgba(255,255,255,.10)':'rgba(255,255,255,.04)');if(s)px(16,y,2,21,'#ff5ee8');
+    T(r.l,26,y+14,8,s?'#ffffff':'#c8c4e0','left');
+    if(r.t==='pick'||r.t==='num'){const v=r.t==='pick'?TRE[TR.ei].n:String(TR.n);T('<',172,y+14,8,s?'#ff5ee8':'#6a5a98','center');T('>',W-34,y+14,8,s?'#ff5ee8':'#6a5a98','center');
+      T(v,(172+W-34)/2,y+14,8,'#ffffff','center');if(r.t==='pick'){const a=TRE[TR.ei].a;T('ACT '+a,26+TW(r.l,8)+10,y+14,8,a===2?'#8ff0ff':'#ffe66d','left');}}
+    else if(r.t==='tog'){const on=TR[r.k];prr(W-62,y+4,28,12,6,on?'#34c759':'#3a3458');ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(on?W-40:W-56,y+10,5,0,7);ctx.fill();
+      T(r.k==='aggro'?(on?'FIGHTS BACK':'PASSIVE'):(on?'ON':'OFF'),W-70,y+14,8,on?'#9dffa0':'#7a6aa0','right');}
+    else T('>',W-34,y+14,8,s?'#ffffff':'#7a6aa0','center');});
+  T('BEST COMBO  '+TR.best+' HITS',CX,H-26,8,'#ffe66d','center');
+  const p=PR('UP/DOWN: PICK   LEFT/RIGHT: CHANGE   ENTER: SELECT   ESC: BACK','[LS]: PICK + CHANGE   [A] SELECT   [B] BACK','TAP A ROW  -  TAP < > TO CHANGE');TP(p,CX,H-12,8,'#6a5a98','center');}
+function trTap(x,y){for(let i=0;i<TRROWS.length;i++){const yy=40+i*25;if(y>=yy&&y<yy+21&&x>16&&x<W-16){TR.sel=i;const r=TRROWS[i];if((r.t==='pick'||r.t==='num')&&x>150){trAdj(i,x<(172+W-34)/2?-1:1);}else trChoose(i);return;}}}
+{const _dp=drawPause;drawPause=function(){if(pview==='training'){drawTraining();return;}return _dp();};}
+{const _k=keyDown;keyDown=function(code){
+  if(paused&&pview==='training'&&!trans){if(code==='ArrowUp'){TR.sel=(TR.sel+TRROWS.length-1)%TRROWS.length;ui('uiMove');return;}if(code==='ArrowDown'){TR.sel=(TR.sel+1)%TRROWS.length;ui('uiMove');return;}
+    if(code==='ArrowLeft'){trAdj(TR.sel,-1);return;}if(code==='ArrowRight'){trAdj(TR.sel,1);return;}if(code==='Enter'||code==='Space'||code==='KeyZ'){trChoose(TR.sel);return;}}
+  if(TR.on&&!paused&&!trans&&code==='KeyR'){trReset();return;}
+  return _k(code);};}
 
 </script>
 </body>
