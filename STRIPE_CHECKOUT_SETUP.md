@@ -5,9 +5,14 @@ The game and shop are served from GitHub Pages, which is **static hosting**. Thi
 ## Stripe products supplied
 
 - Stripe product **FCSTS** (Forever Changing / Still the Same, according to the supplied dashboard label): `prod_VehQgolIY136o0`.
-- Second Stripe product: `prod_VehGbSqG6enzeX`. Verify that this is **After Dark** in your own Stripe dashboard before connecting.
+- Second Stripe product: `prod_VehGbSqG6enzeX`. The owner confirmed that the second Payment Link belongs to **After Dark**; product-to-link association was not independently inspected inside Stripe.
 
-**These are Stripe Dashboard product identifiers, not public checkout URLs.** They cannot be sent directly to players and do not indicate the product's live price.
+**These are Stripe Dashboard product identifiers, not public checkout URLs.** The owner has now supplied and confirmed the following public links:
+
+- **Forever Changing:** `https://buy.stripe.com/4gM28k4P3a8C3utciabwk00`
+- **After Dark:** `https://buy.stripe.com/9B600cchvfsW8ON4PIbwk01`
+
+Both URLs are configured in the preview branch. Checkout URLs could not be independently inspected from here to confirm actual product prices, required size fields, or shipping/taxes. **Verify all of those manually in Stripe before merging the PR.**
 
 ## Step 1 — Create customer-facing Payment Links
 
@@ -27,8 +32,8 @@ Edit the `STORE` constant near the bottom of `shop.html`. These are **examples o
 
 ```js
 const STORE = {
-  diamond: { price: '$YOUR_PRICE', link: 'https://buy.stripe.com/YOUR_FCSTS_LINK', links: null, sizes: ['S','M','L','XL','2XL'] },
-  onyx:    { price: '$YOUR_PRICE', link: 'https://buy.stripe.com/YOUR_AFTER_DARK_LINK', links: null, sizes: ['S','M','L','XL','2XL'] }
+  diamond: { price: '', link: 'https://buy.stripe.com/4gM28k4P3a8C3utciabwk00', links: null, confirmed: true, sizes: ['S','M','L','XL','2XL'] },
+  onyx:    { price: '', link: 'https://buy.stripe.com/9B600cchvfsW8ON4PIbwk01', links: null, confirmed: true, sizes: ['S','M','L','XL','2XL'] }
 };
 ```
 
@@ -37,7 +42,7 @@ const STORE = {
 - The preview and price displays come from these values; BUY goes through the themed terminal then Stripe.
 - With a single `link` for each shirt, **size is selected on Stripe's form**, not transferred from the game.
 - To choose a size in the game and guarantee the exact variant purchased, provide one link per size in `links:{S:'https://...',M:'https://...',...}` or build a secure server-side Checkout Session integration that can pass selected options. Don't assume a locally selected size will automatically appear in a generic Payment Link.
-- Leave `link:''` and `links:null` while setting up; then buyers see **DROPPING SOON** and an offline terminal preview rather than an invalid payment button.
+- The owner has confirmed the mapping and `confirmed:true` now enables the BUY buttons on this preview branch. Prices remain unfilled, so the store says **SEE STRIPE** rather than inventing dollar amounts. Keep this branch off the live site until shipping, size fields, product and taxes are checked.
 
 ## Step 3 — Match the Stripe-hosted page to the game
 
