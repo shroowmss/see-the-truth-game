@@ -425,7 +425,7 @@ function updatePlayer(dt){
   if(P.jb>0&&canCancel&&!P.air&&keys.ArrowDown&&onPlat()){P.y+=2;P.air=true;P.drop=.22;P.jb=0;P.coy=0;setSt('jump');P.t=.2;s='jump';}
   if(P.jb>0&&canCancel&&!(keys.KeyX&&s!=='slide')&&(!P.air||P.coy>0)&&!((s==='slide'||s==='crouch'||s==='crawl')&&blocked(P.x,P.y,40))){P.vy=-MV.jumpV;P.air=true;P.coy=0;P.jb=0;P.jhold=true;setSt('jump');landDust(8,55,5);s='jump';}
   if(P.dashCD>0)P.dashCD-=dt;if(P.drop>0)P.drop-=dt;
-  if(hit.KeyA&&canDash(s)){startDash(dir);s='dash';}
+  if((hit.KeyA||(P.adq&&P.air&&G-P.adq<.2))&&canDash(s)){P.adq=0;startDash(dir);s='dash';}   // an air dash pressed a little early (or during a hit freeze) still comes out
   // ---- states
   if(s==='hurt'){if(P.t>.6&&!P.air)setSt('idle');}
   else if(s==='dash'){dashStep(dir);}
@@ -472,7 +472,7 @@ function updatePlayer(dt){
   // ---- horizontal: accelerate toward a target speed instead of snapping to it
   if(s==='hurt'){if(!P.air)P.vx*=Math.pow(.88,dt*60);}
   else if(s==='atk'){const m=MOVES[P.mv];if(m.dash){if(P.t*30>=m.dash[0])P.vx=approach(P.vx,0,m.dash[2]*dt);}else P.vx=approach(P.vx,0,MV.dec*.55*dt);}
-  else if(s==='dash'){const t=P.t;if(t<DASH.wind)P.vx=P.face*60;else if(t<DASH.burst)P.vx=P.face*DASH.v;else P.vx=approach(P.vx,0,1100*dt);
+  else if(s==='dash'&&P.xdash){xdashStep(dt);}else if(s==='dash'){const t=P.t;if(t<DASH.wind)P.vx=P.face*60;else if(t<DASH.burst)P.vx=P.face*DASH.v;else P.vx=approach(P.vx,0,1100*dt);
     if(t>=DASH.wind&&t<DASH.burst&&Math.floor(t*30)!==P.gf){P.gf=Math.floor(t*30);if(P.gf%2===0){const [an,at]=playAnim();P.ghosts.push({x:P.x,y:P.y,an,at,face:P.face,t:G});}if(!P.air)fx.push({x:P.x-P.face*8+(rnd()-.5)*6,y:P.y-3+FO(P.y),vx:-P.face*(30+rnd()*40),vy:-(6+rnd()*14),l:0,L:.35,c:'d',z:0,p:0});}}
   else if(s==='hvc'){P.vx=approach(P.vx,0,MV.dec*dt);}
   else if(s==='hvr'){const f=P.t*24;if(f>=.5&&f<4.5)P.vx=P.face*(60+110*(P.hcharge||0));else P.vx=approach(P.vx,0,900*dt);}
@@ -496,7 +496,7 @@ function updatePlayer(dt){
      if(Math.floor(G*9)!==P.sf){P.sf=Math.floor(G*9);const [an,at]=playAnim(),k=AMAP.run.indexOf(fidx(an,at));if(k>=0){const e=RUNTIP[k];smoke(P.x+(e[0]-37+11)*P.face,P.y-71+FOOT+e[1],1,1);}}}}
   // ---- vertical: lighter gravity while the jump is held, heavier when released or falling
   if(P.air&&s==='dash'&&P.t<DASH.burst){P.vy=0;}
-  else if(P.air){const g=(P.alock>0&&s!=='aslam'&&s!=='adive'&&s!=='hurt')?0:P.vy<0?(P.jhold||s==='hurt'||s==='upc'?MV.gUp:MV.gCut):MV.gDown;const vy0=P.vy;P.vy=Math.min(MV.maxFall,P.vy+g*dt);
+  else if(P.air){const g=(P.xdash||(P.alock>0&&s!=='aslam'&&s!=='adive'&&s!=='hurt'))?0:P.vy<0?(P.jhold||s==='hurt'||s==='upc'?MV.gUp:MV.gCut):MV.gDown;const vy0=P.vy;P.vy=Math.min(MV.maxFall,P.vy+g*dt);
     if(moveY(P.vy*dt)){P.air=false;P.gy=P.y;landDust(vy0>380?18:vy0>220?14:8,vy0>380?120:vy0>220?95:60,vy0>380?12:8);P.upUsed=0;P.airDash=0;P.chased=0;P.airHits=0;P.stall=0;P.alock=0;if(P.chaseDn===2){P.chaseDn=0;setSt('idle');landDust(8,70,6);}else if(P.st==='dash'){}else if(P.st==='airp'||P.st==='ajab'||P.st==='akick'||P.st==='achase'){if(P.chaseDn===2){P.chaseDn=0;setSt('idle');landDust(8,70,6);}else setSt('aland');}else if(P.st==='adive'||P.st==='aslam'){aerLand();}else if(P.st==='upc'){setSt('upland');landDust(10,80,7);}else if(P.st!=='hurt')setSt('land');}}
   else P.gy=P.y;
   P.x=Math.min(MW*TS-10,Math.max(10,P.x));
@@ -1704,6 +1704,14 @@ function zTake(since){const q=P.zq||[];while(q.length&&(G-q[0].t>=.3||q[0].t<sin
 function aerStart(s){setSt(s);P.ast=G;P.hitset=new Set();if(s==='aslam'){P.vy=Math.min(P.vy,-60);}}
 function aerChase(){if(!hit.Space||P.chased||G-(P.chaseT||-9)>.7)return false;let tg=null,bd=170;for(const o of botsA)if(o.alive&&o.jug){const d=Math.hypot(o.x-P.x,o.y-18-(P.y-22));if(d<bd){bd=d;tg=o;}}
   if(!tg)return false;P.face=tg.x>=P.x?1:-1;P.chased=1;P.jb=0;P.chaseDn=keys.ArrowDown?1:0;aerStart('achase');if(P.chaseDn)pop(P.x,P.y-58,'DRIVE!','#ffe66d');P.vy=Math.max(-220,Math.min(40,(tg.y-6-P.y)*4));P.stall=.3;return true;}
+{const _k=keyDown;keyDown=function(c){if(c==='KeyA'&&!keys.KeyA&&scene==='play')P.adq=G;return _k(c);};}
+// air dash cross-up: dash at a launched enemy in the air and you go straight through them, turn around behind them and keep your height
+function xdashFind(){let best=null,bd=1e9;for(const o of botsA){if(!o.alive||!o.jug)continue;const dx=(o.x-P.x)*P.face,dy=Math.abs((o.y-18)-(P.y-22));if(dx>-6&&dx<96&&dy<56&&dx<bd){bd=dx;best=o;}}return best;}
+{const _sd=startDash;startDash=function(dir){_sd(dir);P.xdash=null;if(!P.air)return;const o=xdashFind();if(!o)return;
+  P.xdash={o,x:o.x+P.face*26};P.vy=0;P.alock=Math.max(P.alock||0,.4);if(o.jug){o.jug.lock=Math.max(o.jug.lock||0,.45);o.jug.vy=Math.min(o.jug.vy,0);}};}
+function xdashStep(dt){const X=P.xdash;P.vy=0;P.vx=P.face*360;if(X.o.jug){X.o.jug.lock=Math.max(X.o.jug.lock||0,.3);}
+  if((P.x-X.x)*P.face>=0||P.t>.35){P.vx=0;P.face=-P.face;P.xdash=null;setSt('jump');P.t=.3;P.alock=Math.max(P.alock||0,.38);P.airDash=Math.max(0,(P.airDash||1)-1);
+    pop(P.x,P.y-60,'CROSS-UP','#8ff0ff');spark(P.x,P.y-24,10,['#fff','#8ff0ff',WEAR('onyx')?'#ff4d6d':WEAR('diamond')?'#8fe0ff':'#c9a6ff'],80);sfx('dashW',.5);}}
 // air lock: every air hit on a launched enemy holds you both in the air a moment longer (a little less each hit, never less than a short beat)
 const AIRLOCK=()=>Math.max(.2,.44-(P.airHits||0)*.008);
 // called from the air branch of updatePlayer
@@ -1723,7 +1731,7 @@ function aerLand(){setSt('slland');shakeT=Math.max(shakeT,.22);rumble(.7,.8,200)
 function aerHits(){const m=AERM[P.st];if(!m)return;const u=P.t*m.fps;
   m.hits.forEach((w,wi)=>{if(u<w.a||u>=w.b)return;
     for(const o of foes()){if(!o.alive||o.dying!=null||o.st==='dead')continue;const key='a'+P.st+wi+':'+(o.id||orbs.indexOf(o));if(P.hitset.has(key))continue;
-      const rx=(o.x-P.x)*P.face,ry=foeY(o)-P.y;if(rx>w.box[0]-7&&rx<w.box[1]+7&&ry>w.box[2]-7&&ry<w.box[3]+7){P.hitset.add(key);P.airHits=(P.airHits||0)+1;const jg=o.jug;hitOrb(o,w);if(P.chaseDn===2){P.stall=0;P.alock=0;setSt('jump');P.t=.3;P.vy=560;P.vx=0;}else if(jg&&o.jug&&P.st!=='aslam')P.alock=AIRLOCK();else P.stall=Math.max(P.stall||0,.16);}}});}
+      const rx=(o.x-P.x)*P.face,ry=foeY(o)-P.y;if(rx>w.box[0]-7&&rx<w.box[1]+7&&ry>w.box[2]-7&&ry<w.box[3]+7){P.hitset.add(key);P.airHits=(P.airHits||0)+1;const jg=o.jug;hitOrb(o,w);if(jg)P.airDash=0;if(P.chaseDn===2){P.stall=0;P.alock=0;setSt('jump');P.t=.3;P.vy=560;P.vx=0;}else if(jg&&o.jug&&P.st!=='aslam')P.alock=AIRLOCK();else P.stall=Math.max(P.stall||0,.16);}}});}
 /*AEREND*/
 
 
