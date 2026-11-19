@@ -165,13 +165,13 @@ body.checkout-open{overflow:hidden}
      link  : your checkout link (a Stripe Payment Link, Shopify / Big Cartel product page, etc.)
      links : OR one checkout link per size, e.g. {S:'https://...', M:'https://...'}; then the size buttons decide where BUY goes
    Leave link/links empty and the button shows DROPPING SOON. */
-// The two customer-facing links below were supplied in this order.
-// They are STAGED until the owner verifies which product each link opens.
-// Do not set confirmed:true until the item names, prices, shipping, and size
-// collection have been verified in Stripe for each link.
+// Owner confirmed the mapping of the two customer-facing Stripe Payment Links.
+// Prices and shipping/size collection must still be verified inside Stripe
+// before merging this branch into the live GitHub Pages site.
+// The actual price is shown by Stripe at checkout (not assumed by the game).
 const STORE={
-  diamond:{price:'',link:'https://buy.stripe.com/4gM28k4P3a8C3utciabwk00',links:null,confirmed:false,sizes:['S','M','L','XL','2XL']},
-  onyx:   {price:'',link:'https://buy.stripe.com/9B600cchvfsW8ON4PIbwk01',links:null,confirmed:false,sizes:['S','M','L','XL','2XL']}
+  diamond:{price:'',link:'https://buy.stripe.com/4gM28k4P3a8C3utciabwk00',links:null,confirmed:true,sizes:['S','M','L','XL','2XL']},
+  onyx:   {price:'',link:'https://buy.stripe.com/9B600cchvfsW8ON4PIbwk01',links:null,confirmed:true,sizes:['S','M','L','XL','2XL']}
 };
 /* ================= the rack (matches the game) ================= */
 const RACK=[
@@ -193,7 +193,7 @@ let activeCheckout=null,previousFocus=null;
 const getCheckoutUrl=state=>{
   if(!state)return '';
   const cfg=state.cfg;
-  if(cfg.confirmed!==true)return ''; // Never activate unverified product-to-link mappings.
+  if(cfg.confirmed!==true)return ''; // No live checkout for unconfirmed mappings.
   const link=cfg.links?cfg.links[state.size]:cfg.link;
   if(typeof link!=='string'||!link)return '';
   try{
