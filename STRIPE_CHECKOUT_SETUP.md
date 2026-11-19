@@ -1,6 +1,6 @@
 # See The Truth Supply — Stripe checkout setup
 
-The game and shop are served from GitHub Pages, which is **static hosting**. This implementation keeps the custom arcade UI in `shop.html` and sends card payments to **Stripe-hosted Checkout through Payment Links**. The new "VIEW CHECKOUT TERMINAL" button is a preview until links are installed. No card details are handled or stored in the game.
+The game and shop are served from GitHub Pages, which is **static hosting**. This implementation keeps the custom arcade UI in `shop.html` and sends card payments to **Stripe-hosted Checkout through Payment Links**. The "VIEW CHECKOUT TERMINAL" button opens the pixel-styled order preview; its payment button redirects securely to Stripe. No card details are handled or stored in the game.
 
 ## Stripe products supplied
 
@@ -12,11 +12,11 @@ The game and shop are served from GitHub Pages, which is **static hosting**. Thi
 - **Forever Changing:** `https://buy.stripe.com/4gM28k4P3a8C3utciabwk00`
 - **After Dark:** `https://buy.stripe.com/9B600cchvfsW8ON4PIbwk01`
 
-Both URLs are configured in the preview branch. Checkout URLs could not be independently inspected from here to confirm actual product prices, required size fields, or shipping/taxes. **Verify all of those manually in Stripe before merging the PR.**
+Both URLs are configured in the game shop. The owner confirmed **Forever Changing = $20**, **After Dark = $25**, required size selections and shipping-address collection on both checkout pages. These Stripe settings were owner-verified, not independently inspected by the integration. Shipping fees, taxes, currency and checkout mode (live/test) should still be reviewed before taking real orders.
 
 ## Step 1 — Create customer-facing Payment Links
 
-In [Stripe Payment Links](https://dashboard.stripe.com/payment-links), create one Payment Link for each shirt, using the existing product and its correct Price. Stripe supplies public checkout URLs such as `https://buy.stripe.com/...`.
+Two Stripe Payment Links were created and supplied by the owner. To change them, open [Stripe Payment Links](https://dashboard.stripe.com/payment-links) and update the corresponding entry in the store config.
 
 For each physical-shirt checkout:
 - Enable **shipping-address collection** and configure shipping destinations/rates.
@@ -28,12 +28,12 @@ Stripe custom fields and shipping collection: https://docs.stripe.com/payment-li
 
 ## Step 2 — Configure the game store
 
-Edit the `STORE` constant near the bottom of `shop.html`. These are **examples only**:
+The `STORE` constant near the bottom of `shop.html` now uses the confirmed product links and prices:
 
 ```js
 const STORE = {
-  diamond: { price: '', link: 'https://buy.stripe.com/4gM28k4P3a8C3utciabwk00', links: null, confirmed: true, sizes: ['S','M','L','XL','2XL'] },
-  onyx:    { price: '', link: 'https://buy.stripe.com/9B600cchvfsW8ON4PIbwk01', links: null, confirmed: true, sizes: ['S','M','L','XL','2XL'] }
+  diamond: { price: '$20', link: 'https://buy.stripe.com/4gM28k4P3a8C3utciabwk00', links: null, confirmed: true, sizes: ['S','M','L','XL','2XL'] },
+  onyx:    { price: '$25', link: 'https://buy.stripe.com/9B600cchvfsW8ON4PIbwk01', links: null, confirmed: true, sizes: ['S','M','L','XL','2XL'] }
 };
 ```
 
@@ -42,7 +42,7 @@ const STORE = {
 - The preview and price displays come from these values; BUY goes through the themed terminal then Stripe.
 - With a single `link` for each shirt, **size is selected on Stripe's form**, not transferred from the game.
 - To choose a size in the game and guarantee the exact variant purchased, provide one link per size in `links:{S:'https://...',M:'https://...',...}` or build a secure server-side Checkout Session integration that can pass selected options. Don't assume a locally selected size will automatically appear in a generic Payment Link.
-- The owner has confirmed the mapping and `confirmed:true` now enables the BUY buttons on this preview branch. Prices remain unfilled, so the store says **SEE STRIPE** rather than inventing dollar amounts. Keep this branch off the live site until shipping, size fields, product and taxes are checked.
+- The owner confirmed the mapping, prices and required size/shipping-address fields. `confirmed:true` enables BUY buttons and the shop displays **$20** / **$25**. Confirm shipping fees, taxes, return policy and live checkout behavior before publicly promoting the store.
 
 ## Step 3 — Match the Stripe-hosted page to the game
 
