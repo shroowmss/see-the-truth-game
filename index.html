@@ -496,8 +496,8 @@ function updatePlayer(dt){
      if(Math.floor(G*9)!==P.sf){P.sf=Math.floor(G*9);const [an,at]=playAnim(),k=AMAP.run.indexOf(fidx(an,at));if(k>=0){const e=RUNTIP[k];smoke(P.x+(e[0]-37+11)*P.face,P.y-71+FOOT+e[1],1,1);}}}}
   // ---- vertical: lighter gravity while the jump is held, heavier when released or falling
   if(P.air&&s==='dash'&&P.t<DASH.burst){P.vy=0;}
-  else if(P.air){const g=P.vy<0?(P.jhold||s==='hurt'||s==='upc'?MV.gUp:MV.gCut):MV.gDown;const vy0=P.vy;P.vy=Math.min(MV.maxFall,P.vy+g*dt);
-    if(moveY(P.vy*dt)){P.air=false;P.gy=P.y;landDust(vy0>380?18:vy0>220?14:8,vy0>380?120:vy0>220?95:60,vy0>380?12:8);P.upUsed=0;P.airDash=0;P.chased=0;P.airHits=0;P.stall=0;if(P.st==='dash'){}else if(P.st==='airp'||P.st==='ajab'||P.st==='akick'||P.st==='achase'){setSt('aland');}else if(P.st==='adive'||P.st==='aslam'){aerLand();}else if(P.st==='upc'){setSt('upland');landDust(10,80,7);}else if(P.st!=='hurt')setSt('land');}}
+  else if(P.air){const g=(P.alock>0&&s!=='aslam'&&s!=='adive'&&s!=='hurt')?0:P.vy<0?(P.jhold||s==='hurt'||s==='upc'?MV.gUp:MV.gCut):MV.gDown;const vy0=P.vy;P.vy=Math.min(MV.maxFall,P.vy+g*dt);
+    if(moveY(P.vy*dt)){P.air=false;P.gy=P.y;landDust(vy0>380?18:vy0>220?14:8,vy0>380?120:vy0>220?95:60,vy0>380?12:8);P.upUsed=0;P.airDash=0;P.chased=0;P.airHits=0;P.stall=0;P.alock=0;if(P.chaseDn===2){P.chaseDn=0;setSt('idle');landDust(8,70,6);}else if(P.st==='dash'){}else if(P.st==='airp'||P.st==='ajab'||P.st==='akick'||P.st==='achase'){if(P.chaseDn===2){P.chaseDn=0;setSt('idle');landDust(8,70,6);}else setSt('aland');}else if(P.st==='adive'||P.st==='aslam'){aerLand();}else if(P.st==='upc'){setSt('upland');landDust(10,80,7);}else if(P.st!=='hurt')setSt('land');}}
   else P.gy=P.y;
   P.x=Math.min(MW*TS-10,Math.max(10,P.x));
   if(!P.air)for(const c of CHECKS)if(Math.abs(P.x-c.x)<20&&Math.abs(P.y-c.y)<1&&(chk.x!==c.x||chk.y!==c.y)){chk.x=c.x;chk.y=c.y;pop(c.x-12,c.y-34,'CHECKPOINT','#8ff0ff');spark(c.x-12,c.y-26,8,['#8ff0ff','#fff'],40);}
@@ -1688,12 +1688,14 @@ const AERM={ajab:{fps:24,hits:[{a:2,b:4,box:[2,34,-46,-6],dmg:1,kx:30,pop:1,col:
 const canJug=o=>o.kind==='bot'&&!['hover','eyetv','bigeye','cbars','ctank'].includes(o.skin)&&!(o.skin==='crawler'&&o.mode!=='ground')&&o.st!=='dead';
 function aerJug(o,w){if(!canJug(o))return;
   if(!o.jug){if(w.ky!=null&&w.ky<=-150){o.jug={y0:o.y,vy:w.ky*(o.skin==='wbrute'?.68:.8),b:0};P.chaseT=G;pop(o.x,o.y-62,'LAUNCH!','#c9a6ff');}return;}
-  o.y+=((P.y-4)-o.y)*.45;o.x+=((P.x+P.face*20)-o.x)*.3;if(w.spike){o.jug.vy=560;o.jug.sp=1;}else{o.jug.n=(o.jug.n||0)+1;const k=Math.max(.35,1-o.jug.n*.045);if(w.ky!=null&&w.ky<-100)o.jug.vy=Math.min(o.jug.vy,w.ky*.7*k);else o.jug.vy=Math.min(o.jug.vy,-150*k);o.jug.hang=.14*k;}
+  o.y+=((P.y-4)-o.y)*.45;o.x+=((P.x+P.face*20)-o.x)*.3;if(w.spike){o.jug.vy=560;o.jug.sp=1;}else if(P.st==='achase'&&P.chaseDn){o.jug.vy=620;o.jug.sp=2;o.jug.lock=0;P.vy=Math.max(P.vy,480);P.chaseDn=2;P.alock=0;}
+  else{o.jug.n=(o.jug.n||0)+1;if(w.ky!=null&&w.ky<-100)o.jug.vy=Math.min(o.jug.vy,w.ky*.7);else o.jug.vy=Math.min(o.jug.vy,-60);o.jug.lock=AIRLOCK();}
   P.chaseT=G;}
-function aerJugStep(o,dt){const j=o.jug;if(j.hang>0){j.hang-=dt;j.vy=Math.min(j.vy+140*dt,40);}else j.vy=Math.min(j.vy+(j.vy<0?560:700)*dt,480);o.y+=j.vy*dt;o.x+=o.kx*.35*dt;o.kx*=Math.pow(.05,dt);if(o.a!=null)o.x=Math.max(o.a,Math.min(o.b,o.x));
+function aerJugStep(o,dt){const j=o.jug;if(j.lock>0){j.lock-=dt;j.vy+=(0-j.vy)*Math.min(1,dt*10);}else j.vy=Math.min(j.vy+(j.vy<0?620:700)*dt,j.sp?900:520);o.y+=j.vy*dt;o.x+=o.kx*.35*dt;o.kx*=Math.pow(.05,dt);if(o.a!=null)o.x=Math.max(o.a,Math.min(o.b,o.x));
   o.st='hit';o.t=Math.min(o.t,.1);
   if(o.y>=j.y0&&j.vy>0){o.y=j.y0;spark(o.x,o.y-2,j.sp?14:6,['#d9d3f0','#8a8aa8'],j.sp?90:40);
     if(j.sp){o.hp-=1;sfx('spike');shakeT=Math.max(shakeT,.18);rumble(.5,.6,140);pop(o.x,o.y-50,'SPIKED!','#c9a6ff');cash+=15;}
+    if(j.sp===2){o.jug=null;o.st='hit';o.t=0;o.stun=1;o.kx=0;o.x=P.x+P.face*22;if(o.a!=null)o.x=Math.max(o.a,Math.min(o.b,o.x));sfx('spike',.8);shakeT=Math.max(shakeT,.14);rumble(.4,.5,120);pop(o.x,o.y-50,'GROUNDED!','#ffe66d');landDust(10,80,7);return;}
     if(j.sp&&!j.b&&o.hp>0){o.jug={y0:j.y0,vy:-150,b:1};return;}
     o.jug=null;o.st='hit';o.t=0;}}
 // remember each attack press (and whether Down was held) so a follow-up pressed a little early still comes out
@@ -1701,10 +1703,13 @@ function aerJugStep(o,dt){const j=o.jug;if(j.hang>0){j.hang-=dt;j.vy=Math.min(j.
 function zTake(since){const q=P.zq||[];while(q.length&&(G-q[0].t>=.3||q[0].t<since-.001))q.shift();return q.shift()||null;}
 function aerStart(s){setSt(s);P.ast=G;P.hitset=new Set();if(s==='aslam'){P.vy=Math.min(P.vy,-60);}}
 function aerChase(){if(!hit.Space||P.chased||G-(P.chaseT||-9)>.7)return false;let tg=null,bd=170;for(const o of botsA)if(o.alive&&o.jug){const d=Math.hypot(o.x-P.x,o.y-18-(P.y-22));if(d<bd){bd=d;tg=o;}}
-  if(!tg)return false;P.face=tg.x>=P.x?1:-1;P.chased=1;P.jb=0;aerStart('achase');P.vy=Math.max(-220,Math.min(40,(tg.y-6-P.y)*4));P.stall=.3;return true;}
+  if(!tg)return false;P.face=tg.x>=P.x?1:-1;P.chased=1;P.jb=0;P.chaseDn=keys.ArrowDown?1:0;aerStart('achase');if(P.chaseDn)pop(P.x,P.y-58,'DRIVE!','#ffe66d');P.vy=Math.max(-220,Math.min(40,(tg.y-6-P.y)*4));P.stall=.3;return true;}
+// air lock: every air hit on a launched enemy holds you both in the air a moment longer (a little less each hit, never less than a short beat)
+const AIRLOCK=()=>Math.max(.2,.44-(P.airHits||0)*.008);
 // called from the air branch of updatePlayer
 function aerAir(s,dir,dt){if(aerChase())return;
-  if(P.stall>0){P.stall-=dt;P.vy=Math.min(P.vy,30);}
+  if(P.alock>0&&s!=='aslam'&&s!=='adive'){P.alock-=dt;P.vy=Math.min(P.vy,0);}   // gravity is off while the air lock holds (see the air branch of the physics)
+  else if(P.stall>0){P.stall-=dt;P.vy=Math.min(P.vy,30);}
   if(s==='ajab'){const f=P.t*24;if(f>=4){const z=zTake(0);if(z){aerStart(z.dn?'aslam':'akick');return;}}if(f>=8){setSt('jump');P.t=.3;}return;}
   if(s==='akick'){if(P.t*22>=8){setSt('jump');P.t=.3;}return;}
   if(s==='aslam'){if(P.t*20<4)P.vy=Math.min(P.vy,-10);else{setSt('adive');P.vy=560;}return;}
@@ -1718,7 +1723,7 @@ function aerLand(){setSt('slland');shakeT=Math.max(shakeT,.22);rumble(.7,.8,200)
 function aerHits(){const m=AERM[P.st];if(!m)return;const u=P.t*m.fps;
   m.hits.forEach((w,wi)=>{if(u<w.a||u>=w.b)return;
     for(const o of foes()){if(!o.alive||o.dying!=null||o.st==='dead')continue;const key='a'+P.st+wi+':'+(o.id||orbs.indexOf(o));if(P.hitset.has(key))continue;
-      const rx=(o.x-P.x)*P.face,ry=foeY(o)-P.y;if(rx>w.box[0]-7&&rx<w.box[1]+7&&ry>w.box[2]-7&&ry<w.box[3]+7){P.hitset.add(key);P.airHits=(P.airHits||0)+1;P.stall=Math.max(P.stall||0,Math.max(.06,.24-P.airHits*.012));hitOrb(o,w);}}});}
+      const rx=(o.x-P.x)*P.face,ry=foeY(o)-P.y;if(rx>w.box[0]-7&&rx<w.box[1]+7&&ry>w.box[2]-7&&ry<w.box[3]+7){P.hitset.add(key);P.airHits=(P.airHits||0)+1;const jg=o.jug;hitOrb(o,w);if(P.chaseDn===2){P.stall=0;P.alock=0;setSt('jump');P.t=.3;P.vy=560;P.vx=0;}else if(jg&&o.jug&&P.st!=='aslam')P.alock=AIRLOCK();else P.stall=Math.max(P.stall||0,.16);}}});}
 /*AEREND*/
 
 
