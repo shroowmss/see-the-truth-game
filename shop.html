@@ -111,6 +111,17 @@ footer .px{font-size:9px;color:var(--dim);display:block;margin-bottom:8px}
 .checkout-secure .lock{color:var(--grn)}
 body.checkout-open{overflow:hidden}
 @media(max-width:620px){.checkout-window{max-height:calc(100dvh - 28px)}.checkout-columns{grid-template-columns:1fr}.checkout-item{min-height:200px;padding:14px}.checkout-item .spin{transform:scale(.68);margin:-18px 0}.checkout-details{padding:17px}.checkout-stepper{font-size:7px}.checkout-overlay{padding:14px 12px}}
+
+/* Secret in-game apparel redemption terminal */
+.redeem{max-width:700px;margin:0 auto 42px;padding:22px;background:#100c28;border:2px solid var(--pink);box-shadow:6px 6px 0 #000}
+.redeem h2{font:12px/1.7 'Press Start 2P',monospace;color:var(--grn);margin:0 0 12px}
+.redeem p{color:var(--dim);margin:0 0 12px}
+.redeem form{display:flex;gap:9px;flex-wrap:wrap}
+.redeem input{flex:1;min-width:180px;background:#060414;border:2px solid var(--cyan);color:#fff;padding:12px;font:18px 'VT323',monospace}
+.redeem input:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+.redeem button{font:9px/1.6 'Press Start 2P',monospace;border:0;background:var(--grn);padding:12px;color:#071409;cursor:pointer}
+.redeem button:hover,.redeem button:focus-visible{background:#fff;outline:2px solid var(--cyan)}
+.redeem-result{min-height:28px;margin-top:12px;color:var(--yel)}
 </style>
 </head>
 <body>
@@ -123,6 +134,17 @@ body.checkout-open{overflow:hidden}
     <div class="kick px">OFFICIAL SUPPLY</div>
     <h1 class="px">WEAR THE TRUTH</h1>
     <p>Every shirt Onyx finds in the game is a real one. Here's the rack.</p>
+  </section>
+
+  <section class="redeem" aria-labelledby="redeemHeading">
+    <h2 id="redeemHeading">[+] SECRET ACCESS TERMINAL</h2>
+    <p>Received a secret code? Enter it to unlock in-game equipment for this browser. No purchase or story progress required.</p>
+    <form id="redeemForm">
+      <label class="px" for="redeemCode" style="font-size:9px;align-self:center">ACCESS CODE</label>
+      <input id="redeemCode" name="code" type="text" autocomplete="off" spellcheck="false" maxlength="64" placeholder="ENTER CODE" required aria-describedby="redeemResult">
+      <button type="submit">UNLOCK &gt;</button>
+    </form>
+    <div id="redeemResult" class="redeem-result" role="status" aria-live="polite"></div>
   </section>
   <section class="grid" id="grid" aria-label="Shirts"></section>
 </main>
@@ -267,6 +289,44 @@ checkoutPay.addEventListener('click',()=>{
 });
 
 let found=[];try{found=JSON.parse(localStorage.getItem('stt_shirts')||'[]');}catch(e){}
+
+// Public browser-only gift codes: these unlock IN-GAME outfits, not real products or Stripe orders.
+// Codes included in client-side JavaScript can be inspected and freely shared.
+// A backend is required for genuinely private, one-time, recipient-specific codes.
+const GIFT_CODES=Object.freeze({
+  truths33ker:['diamond'],
+  aftrhrs:['onyx'],
+  onyxaccess:['diamond','onyx']
+});
+const redeemForm=document.getElementById('redeemForm');
+const redeemResult=document.getElementById('redeemResult');
+redeemForm.addEventListener('submit',event=>{
+  event.preventDefault();
+  const code=document.getElementById('redeemCode').value.trim().toLowerCase();
+  const gifts=Object.prototype.hasOwnProperty.call(GIFT_CODES,code)?GIFT_CODES[code]:null;
+  if(!gifts){redeemResult.textContent='ACCESS DENIED // Invalid code.';redeemResult.style.color='var(--red)';return;}
+  let current=[];
+  try{const saved=JSON.parse(localStorage.getItem('stt_shirts')||'[]');if(Array.isArray(saved))current=saved.filter(x=>typeof x==='string');}
+  catch(_){}
+  const newlyUnlocked=gifts.filter(id=>!current.includes(id));
+  const merged=[...new Set([...current,...gifts])];
+  try{localStorage.setItem('stt_shirts',JSON.stringify(merged));}
+  catch(_){redeemResult.textContent='SAVE FAILED // Browser storage is unavailable. Enable storage and retry.';redeemResult.style.color='var(--red)';return;}
+  found=merged;
+  gifts.forEach(id=>{
+    const stage=document.querySelector('#'+id+' .stage');
+    if(stage&&!stage.querySelector('.found')){
+      const badge=document.createElement('span');
+      badge.className='found px';badge.textContent='✓ UNLOCKED IN-GAME';stage.append(badge);
+    }
+  });
+  const labels={diamond:'FOREVER CHANGING',onyx:'AFTER DARK'};
+  redeemResult.style.color='var(--grn)';
+  redeemResult.textContent=newlyUnlocked.length
+    ?'ACCESS GRANTED — THE TRUTH IS YOURS // '+newlyUnlocked.map(id=>labels[id]).join(' + ')+' UNLOCKED! Return to the game and reload to equip.'
+    :'ACCESS GRANTED // Already unlocked on this browser. Return to the game and reload to equip.';
+  redeemForm.reset();
+});
 const grid=document.getElementById('grid'),css=document.createElement('style');document.head.appendChild(css);let rules='';
 const el=(t,a={},...k)=>{const e=document.createElement(t);for(const [n,v] of Object.entries(a)){if(n==='class')e.className=v;else if(n==='text')e.textContent=v;else e.setAttribute(n,v);}k.forEach(c=>c&&e.append(c));return e;};
 RACK.forEach(it=>{const cfg=STORE[it.id]||{},size=Math.round(it.fs*it.scale),strip=size*it.n;
