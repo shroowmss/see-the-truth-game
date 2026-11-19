@@ -2429,6 +2429,17 @@ function fcSmpStep(){const live=scene==='play'&&!paused&&typeof FC_ON==='functio
   if(P.st!==FCSS.st&&P.st==='slideup')sfx('fcGetup',.9);FCSS.st=P.st;}
 {const _dh=drawHeavyFX;drawHeavyFX=function(x,y){try{fcSmpStep();}catch(e){}_dh(x,y);};}
 for(const fn of ['shirtSwap','shWearSel']){const f=window[fn];if(typeof f!=='function')continue;window[fn]=function(){const was=SH_ON;const r=f.apply(this,arguments);if(SH_ON==='diamond'&&was!=='diamond')sfx('swapFC',1);return r;};}
+// ---- AFTER DARK recordings, batch 3: combo hits, turn strike and running strike (time-skip feel), air hooks, footsteps, jumps
+Object.assign(SMP.map,{adJab:'s_ad_jab',adCross:'s_ad_cross',adFin:'s_ad_fin',adSpin:'s_ad_spin',adRstrike:'s_ad_rstrike',adHook:'s_ad_hook',adStep:'s_ad_step',adJump:'s_ad_jump1'});
+Object.assign(SMP.vol,{adJab:.55,adCross:.6,adFin:.8,adSpin:.75,adRstrike:.75,adHook:.5,adStep:.35,adJump:.4});
+Object.assign(SMP.alt,{adJab:['s_ad_jab','s_ad_jab2'],adSpin:['s_ad_spin','s_ad_spin2'],adRstrike:['s_ad_rstrike','s_ad_rstrike2'],adHook:['s_ad_hook','s_ad_hook2','s_ad_hook3'],
+  adStep:['s_ad_step','s_ad_step2'],adJump:['s_ad_jump1','s_ad_jump2','s_ad_jump3','s_ad_jump5']});
+// the shared punch sounds give way to these while AFTER DARK is worn
+Object.assign(SH_SWAP.onyx,{pJab:'adJab',pCross:'adCross',pFin:'adFin',pSpin1:'adMuteX',pSpin2:'adSpin',pDash:'adRstrike',pAirJab:'adHook',swing:'adSwingX'});
+Object.assign(SND,{adJab:(ac,d,t,v)=>{smpPlay('pJab',v,d);},adCross:(ac,d,t,v)=>{smpPlay('pCross',v,d);},adFin:(ac,d,t,v)=>{smpPlay('pFin',v,d);},adSpin:(ac,d,t,v)=>{smpPlay('pSpin2',v,d);},
+  adRstrike:(ac,d,t,v)=>{smpPlay('pDash',v,d);},adHook:(ac,d,t,v)=>{smpPlay('pAirJab',v,d);},adMuteX:()=>{},
+  // no whoosh before the turn strike, finisher and running strike: the moment is skipped and the hit comes out of silence
+  adSwingX:(ac,d,t,v)=>{if(!(['spin','fin','dash'].includes(P.mv)&&SMP.buf.s_ad_fin))SND.swing(ac,d,t,v);}});
 /*SFXEND*/
 
 /*ACT2JS*/
