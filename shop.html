@@ -165,9 +165,13 @@ body.checkout-open{overflow:hidden}
      link  : your checkout link (a Stripe Payment Link, Shopify / Big Cartel product page, etc.)
      links : OR one checkout link per size, e.g. {S:'https://...', M:'https://...'}; then the size buttons decide where BUY goes
    Leave link/links empty and the button shows DROPPING SOON. */
+// The two customer-facing links below were supplied in this order.
+// They are STAGED until the owner verifies which product each link opens.
+// Do not set confirmed:true until the item names, prices, shipping, and size
+// collection have been verified in Stripe for each link.
 const STORE={
-  diamond:{price:'',link:'',links:null,sizes:['S','M','L','XL','2XL']},
-  onyx:   {price:'',link:'',links:null,sizes:['S','M','L','XL','2XL']}
+  diamond:{price:'',link:'https://buy.stripe.com/4gM28k4P3a8C3utciabwk00',links:null,confirmed:false,sizes:['S','M','L','XL','2XL']},
+  onyx:   {price:'',link:'https://buy.stripe.com/9B600cchvfsW8ON4PIbwk01',links:null,confirmed:false,sizes:['S','M','L','XL','2XL']}
 };
 /* ================= the rack (matches the game) ================= */
 const RACK=[
@@ -189,6 +193,7 @@ let activeCheckout=null,previousFocus=null;
 const getCheckoutUrl=state=>{
   if(!state)return '';
   const cfg=state.cfg;
+  if(cfg.confirmed!==true)return ''; // Never activate unverified product-to-link mappings.
   const link=cfg.links?cfg.links[state.size]:cfg.link;
   if(typeof link!=='string'||!link)return '';
   try{
@@ -200,7 +205,7 @@ function refreshCheckout(){
   const {it,cfg}=activeCheckout;
   document.getElementById('checkoutTitle').textContent=it.name;
   document.getElementById('checkoutType').textContent=it.type+' // '+it.tag;
-  document.getElementById('checkoutPrice').textContent=cfg.price||'PRICE SOON';
+  document.getElementById('checkoutPrice').textContent=cfg.price||(cfg.link?'SEE STRIPE':'PRICE SOON');
   const sprite=document.getElementById('checkoutSprite');
   sprite.className='spin sp_'+it.id;
   sprite.setAttribute('aria-label',it.name+', rotating');
@@ -225,6 +230,7 @@ function refreshCheckout(){
   const status=document.getElementById('checkoutStatus');
   const anyLink=!!(cfg.link||(cfg.links&&Object.values(cfg.links).some(Boolean)));
   if(!anyLink)status.textContent='PREVIEW MODE // This drop is not taking orders yet. Connect the Stripe payment link to go live.';
+  else if(cfg.confirmed!==true)status.textContent='LINK STAGED // Product and price still need to be verified before this checkout can accept orders.';
   else if(cfg.links&&!activeCheckout.size)status.textContent='Choose a size to continue to secure payment.';
   else if(cfg.links&&!available)status.textContent='That size is not currently available.';
   else status.textContent='READY // The next screen is hosted securely by Stripe. Shipping and any taxes are confirmed there.';
@@ -272,15 +278,15 @@ RACK.forEach(it=>{const cfg=STORE[it.id]||{},size=Math.round(it.fs*it.scale),str
   if(has)stage.append(el('span',{class:'found px',text:'✓ FOUND IN-GAME'}));
   const powers=el('div',{class:'powers'},el('h3',{class:'px',text:'IN-GAME POWERS'}));it.powers.forEach(([n,d])=>powers.append(el('div',{class:'pw'},el('b',{text:n}),el('span',{text:d}))));
   const note=el('div',{class:'note',role:'status'});
-  const live=!!(cfg.link||(cfg.links&&Object.values(cfg.links).some(Boolean)));
-  const buy=el('a',{class:'buy',href:'#','aria-disabled':live?'false':'true'});buy.textContent=live?'BUY':'DROPPING SOON';
+  const live=cfg.confirmed===true&&!!(cfg.link||(cfg.links&&Object.values(cfg.links).some(Boolean)));
+  const buy=el('a',{class:'buy',href:'#','aria-disabled':live?'false':'true'});buy.textContent=live?'BUY':(cfg.link?'LINK PENDING':'DROPPING SOON');
   const preview=el('button',{class:'checkout-ghost',type:'button',text:'VIEW CHECKOUT TERMINAL'});
   preview.onclick=()=>openCheckout(it,cfg,pick);
   const body=el('div',{class:'body'},el('div',{},el('div',{class:'name px',text:it.name}),el('div',{class:'type px',text:it.type})),powers);
   if(sizes.length&&!cfg.links)body.append(el('div',{class:'type px',text:'SIZES  '+sizes.join(' \u00b7 ')+(live?'  (PICK AT CHECKOUT)':'')}));
   if(sizes.length&&cfg.links){const row=el('div',{class:'sizes',role:'group','aria-label':'Size'});sizes.forEach(s=>{const b=el('button',{type:'button','aria-pressed':'false',text:s});
       b.onclick=()=>{pick=s;row.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));note.textContent='';};row.append(b);});body.append(row);}
-  body.append(el('div',{class:'buyrow'},el('span',{class:'price px'+(cfg.price?'':' tbd'),text:cfg.price||'PRICE SOON'}),buy),preview,note);
+  body.append(el('div',{class:'buyrow'},el('span',{class:'price px'+(cfg.price?'':' tbd'),text:cfg.price||(cfg.link?'SEE STRIPE':'PRICE SOON')}),buy),preview,note);
   buy.onclick=e=>{e.preventDefault();if(!live){note.textContent='Not on sale yet. Check back soon.';return;}
     let url=cfg.link;if(cfg.links){if(!pick){note.textContent='Pick a size first.';return;}url=cfg.links[pick];if(!url){note.textContent='Size '+pick+' is sold out.';return;}}
     openCheckout(it,cfg,pick);};
@@ -290,7 +296,7 @@ grid.append(el('article',{class:'card soon'},el('div',{class:'stage'},el('div',{
   el('div',{class:'body'},el('div',{},el('div',{class:'name px',text:'MORE OUT THERE'}),el('div',{class:'type px',text:'NEXT DROP'})),
     el('div',{class:'note',text:'New shirts show up in the game first. Find them, then come back here.'}))));
 css.textContent=rules;
-if(!Object.values(STORE).some(c=>c.link||(c.links&&Object.values(c.links).some(Boolean))))document.getElementById('foot').textContent='The store opens soon. Prices and checkout are on the way.';
+if(!Object.values(STORE).some(c=>c.confirmed===true&&(c.link||(c.links&&Object.values(c.links).some(Boolean)))))document.getElementById('foot').textContent='Stripe links are staged, pending product and price verification. Checkout is not live.';
 // opened from the game with #diamond / #onyx: jump to that shirt and flash it
 function focusHash(){const id=location.hash.slice(1),c=id&&document.getElementById(id);if(!c||!c.classList.contains('card'))return;c.scrollIntoView({behavior:'smooth',block:'center'});c.classList.remove('focus');void c.offsetWidth;c.classList.add('focus');}
 addEventListener('hashchange',focusHash);requestAnimationFrame(focusHash);
