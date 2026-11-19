@@ -4778,22 +4778,44 @@ function trChoose(i){const r=TRROWS[i];if(r.t==='go'){setPause(false);trReset();
 function drawTraining(){ctx.imageSmoothingEnabled=false;ctx.drawImage(PSNAP,0,0);ctx.fillStyle='rgba(8,3,22,.94)';ctx.fillRect(0,0,W,H);
   prr(76,12,16,16,4,'#ff5ee8');px(80,19,8,2,'#fff');px(79,17,2,6,'#fff');px(87,17,2,6,'#fff');
   T('TRAINING',98,24,8,'#ffffff','left');px(8,33,W-16,1,'#8e8e93');
-  TRROWS.forEach((r,i)=>{const y=40+i*22,s=i===TR.sel;px(16,y,W-32,19,s?'rgba(255,255,255,.10)':'rgba(255,255,255,.04)');if(s)px(16,y,2,19,'#ff5ee8');
+  TRROWS.forEach((r,i)=>{const y=38+i*20,s=i===TR.sel;px(16,y,W-32,18,s?'rgba(255,255,255,.10)':'rgba(255,255,255,.04)');if(s)px(16,y,2,18,'#ff5ee8');
     T(r.l,26,y+14,8,s?'#ffffff':'#c8c4e0','left');
     if(r.t==='pick'||r.t==='num'||r.t==='ms'){const v=r.t==='ms'?TRMS[TR.ms].n:r.t==='pick'?TRE[TR.ei].n:String(TR.n);if(r.t==='ms')px(26+TW(r.l)+10,y+7,6,6,TRMS[TR.ms].c);T('<',146,y+14,8,s?'#ff5ee8':'#6a5a98','center');T('>',W-30,y+14,8,s?'#ff5ee8':'#6a5a98','center');
       T(v,(146+W-30)/2,y+14,8,'#ffffff','center');if(r.t==='pick'){const a=TRE[TR.ei].a;T('ACT '+a,26+TW(r.l,8)+10,y+14,8,a===2?'#8ff0ff':'#ffe66d','left');}}
     else if(r.t==='tog'){const on=TR[r.k];prr(W-62,y+4,28,12,6,on?'#34c759':'#3a3458');ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(on?W-40:W-56,y+10,5,0,7);ctx.fill();
       T(r.k==='aggro'?(on?'FIGHTS BACK':'PASSIVE'):(on?'ON':'OFF'),W-70,y+14,8,on?'#9dffa0':'#7a6aa0','right');}
     else T('>',W-34,y+14,8,s?'#ffffff':'#7a6aa0','center');});
-  T('BEST COMBO  '+TR.best+' HITS',CX,H-26,8,'#ffe66d','center');
-  const p=PR('UP/DOWN: PICK   LEFT/RIGHT: CHANGE   ENTER: SELECT   ESC: BACK','[LS]: PICK + CHANGE   [A] SELECT   [B] BACK','TAP A ROW  -  TAP < > TO CHANGE');TP(p,CX,H-12,8,'#6a5a98','center');}
-function trTap(x,y){for(let i=0;i<TRROWS.length;i++){const yy=40+i*22;if(y>=yy&&y<yy+19&&x>16&&x<W-16){TR.sel=i;const r=TRROWS[i];if((r.t==='pick'||r.t==='num'||r.t==='ms')&&x>136){trAdj(i,x<(146+W-30)/2?-1:1);}else trChoose(i);return;}}}
+  T('BEST COMBO  '+TR.best+' HITS',CX,H-17,8,'#ffe66d','center');
+  const p=PR('UP/DOWN: PICK   LEFT/RIGHT: CHANGE   ENTER: SELECT   ESC: BACK','[LS]: PICK + CHANGE   [A] SELECT   [B] BACK','TAP A ROW  -  TAP < > TO CHANGE');TP(p,CX,H-5,8,'#6a5a98','center');}
+function trTap(x,y){for(let i=0;i<TRROWS.length;i++){const yy=38+i*20;if(y>=yy&&y<yy+18&&x>16&&x<W-16){TR.sel=i;const r=TRROWS[i];if((r.t==='pick'||r.t==='num'||r.t==='ms')&&x>136){trAdj(i,x<(146+W-30)/2?-1:1);}else trChoose(i);return;}}}
 {const _dp=drawPause;drawPause=function(){if(pview==='training'){drawTraining();return;}return _dp();};}
 {const _k=keyDown;keyDown=function(code){
   if(paused&&pview==='training'&&!trans){if(code==='ArrowUp'){TR.sel=(TR.sel+TRROWS.length-1)%TRROWS.length;ui('uiMove');return;}if(code==='ArrowDown'){TR.sel=(TR.sel+1)%TRROWS.length;ui('uiMove');return;}
     if(code==='ArrowLeft'){trAdj(TR.sel,-1);return;}if(code==='ArrowRight'){trAdj(TR.sel,1);return;}if(code==='Enter'||code==='Space'||code==='KeyZ'){trChoose(TR.sel);return;}}
   if(TR.on&&!paused&&!trans&&code==='KeyR'){trReset();return;}
   return _k(code);};}
+
+// ================= I-FRAMES: a short dodge at the start of the dash, protection on finisher + heavy release impacts =================
+const IFR={dash:[0,.15],fin:[.03,.26],hvr:[.08,.46],t:-9,k:''};
+function ifActive(){const s=P.st,t=P.t||0;
+  if(s==='dash'&&!(typeof WEAR==='function'&&WEAR('onyx'))&&t>=IFR.dash[0]&&t<IFR.dash[1])return 'dodge';   // AFTER DARK already phases through the whole dash
+  if(s==='atk'&&P.mv==='fin'&&t>=IFR.fin[0]&&t<IFR.fin[1])return 'armor';
+  if(s==='hvr'&&t>=IFR.hvr[0]&&t<IFR.hvr[1])return 'armor';return '';}
+Object.assign(SND,{iframe:(ac,d,t,v)=>{sTone(ac,d,t,{type:'triangle',f0:1320,f1:1980,dur:.12,vol:.08*v});sTone(ac,d,t+.05,{f0:2640,f1:2400,dur:.18,vol:.05*v});sNoise(ac,d,t,{f0:6000,q:3,dur:.08,vol:.05*v});},
+  iframeArmor:(ac,d,t,v)=>{sTone(ac,d,t,{type:'square',f0:220,f1:180,dur:.08,vol:.08*v});sTone(ac,d,t,{f0:1760,f1:1500,dur:.14,vol:.05*v});}});
+{const _h=hurtBy;hurtBy=function(o){const k=P.inv>0?'':ifActive();if(k){if(G-IFR.t>.25){IFR.t=G;IFR.k=k;
+    pop(P.x,P.y-60,k==='dodge'?'DODGE!':'ARMOR!',k==='dodge'?'#8ff0ff':'#ffe66d');spark(P.x,P.y-24,12,k==='dodge'?['#fff','#8ff0ff','#2fd8ff']:['#fff','#ffe66d','#ff9b3d'],90);
+    sfx(k==='dodge'?'iframe':'iframeArmor',1);if(typeof rumble==='function')rumble(.2,.3,60);}return false;}return _h(o);};}
+// the flash when an i-frame saves you, and the training-room view of the windows
+function ifDraw(){const x=Math.round(P.x-camX),y=Math.round(P.y-camY+FOOT+FO(P.y))-24,dt=G-IFR.t;
+  if(dt<.3){const r=10+dt*70,a=1-dt/.3;ctx.globalAlpha=a;ctx.strokeStyle=IFR.k==='dodge'?'#8ff0ff':'#ffe66d';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(x,y,r,r*1.25,0,0,7);ctx.stroke();ctx.globalAlpha=1;}
+  if(typeof TR!=='undefined'&&TR.on&&TR.ifv){const k=ifActive();if(k){const c=k==='dodge'?'143,240,255':'255,230,109';ctx.fillStyle='rgba('+c+',.28)';ctx.beginPath();ctx.ellipse(x,y,16,28,0,0,7);ctx.fill();
+    ctx.strokeStyle='rgba('+c+',.9)';ctx.lineWidth=1;ctx.stroke();T('I-FRAME',x,y-34,8,'rgb('+c+')','center','#12042c');}}}
+{const _da=diaAura;diaAura=function(x,y){_da(x,y);if(scene==='play')try{ifDraw();}catch(e){}};}
+// training room: I-FRAME VIEW toggle
+TR.ifv=false;try{const s=JSON.parse(localStorage.getItem('stt_tr')||'null');if(s&&s.ifv)TR.ifv=true;}catch(e){}
+{const _s=trSave;trSave=function(){_s();try{const o=JSON.parse(localStorage.getItem('stt_tr')||'{}');o.ifv=TR.ifv;localStorage.setItem('stt_tr',JSON.stringify(o));}catch(e){}};}
+TRROWS.splice(5,0,{l:'I-FRAME VIEW',t:'tog',k:'ifv'});
 
 </script>
 <script src="snd.js"></script>
