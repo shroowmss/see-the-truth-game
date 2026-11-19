@@ -73,6 +73,44 @@ footer{border-top:2px solid var(--line);padding:22px 0 40px;color:var(--faint);f
 footer .px{font-size:9px;color:var(--dim);display:block;margin-bottom:8px}
 @media (max-width:420px){.hero{padding:38px 0 24px}.stage{height:220px}.name{font-size:13px}}
 @media (prefers-reduced-motion:reduce){.spin{animation:none!important}.eye{animation:none}.card.focus{animation:none;border-color:var(--yel)}}
+
+/* ===================== RETRO CHECKOUT TERMINAL ===================== */
+.checkout-ghost{border:1px solid var(--cyan);background:transparent;color:var(--cyan);font:8px 'Press Start 2P',monospace;letter-spacing:.03em;padding:11px 12px;cursor:pointer;align-self:flex-start}
+.checkout-ghost:hover,.checkout-ghost:focus-visible{background:var(--cyan);color:var(--bg);outline:2px solid var(--cyan);outline-offset:2px}
+.checkout-overlay[hidden]{display:none!important}
+.checkout-overlay{position:fixed;inset:0;background:#04020fe8;backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:40;padding:22px 12px;overflow-y:auto}
+.checkout-window{position:relative;background:var(--bg2);border:3px solid var(--cyan);width:min(780px,100%);max-height:calc(100vh - 44px);overflow:auto;box-shadow:0 0 0 4px #0b0618,0 0 0 6px var(--pink),10px 12px 0 #000;outline:none}
+.checkout-window::after{content:"";pointer-events:none;position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 3px,#0002 3px 4px)}
+.checkout-top{position:relative;z-index:1;background:#0a1640;border-bottom:2px solid var(--grn);padding:15px 16px;display:flex;gap:12px;justify-content:space-between;align-items:center}
+.checkout-eyebrow{font:9px 'Press Start 2P',monospace;color:var(--grn);line-height:1.7}
+.checkout-close{background:var(--bg);color:var(--ink);border:2px solid var(--pink);font:10px 'Press Start 2P',monospace;padding:9px 11px;cursor:pointer}
+.checkout-close:hover,.checkout-close:focus-visible{background:var(--pink);color:var(--bg);outline:none}
+.checkout-stepper{position:relative;z-index:1;display:flex;justify-content:space-between;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);color:var(--faint);font:8px 'Press Start 2P',monospace;line-height:1.7}
+.checkout-stepper .active{color:var(--yel)}
+.checkout-columns{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr)}
+.checkout-item{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:26px 14px;background:radial-gradient(circle at 50% 45%,#233c7a66,transparent 67%),#0d0722;border-right:2px solid var(--line);overflow:hidden;min-height:300px}
+.checkout-item .spin{flex:none;max-width:none}
+.checkout-item-label{font:8px 'Press Start 2P',monospace;color:var(--cyan);line-height:1.7;text-align:center}
+.checkout-details{padding:22px;display:flex;flex-direction:column;gap:14px}
+.checkout-details h2{font:clamp(13px,2.6vw,19px)/1.65 'Press Start 2P',monospace;color:#fff}
+.checkout-type{font:9px 'Press Start 2P',monospace;color:var(--pink)}
+.checkout-price{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:14px 0;border-block:1px dashed var(--line)}
+.checkout-price .label{font:9px 'Press Start 2P',monospace;color:var(--dim)}
+.checkout-price .value{font:15px 'Press Start 2P',monospace;color:var(--yel)}
+.checkout-size-label{font:9px 'Press Start 2P',monospace;color:var(--cyan);margin-bottom:8px}
+.checkout-size-help{color:var(--dim);font-size:19px}
+.checkout-sizes{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.checkout-sizes button{border:2px solid var(--line);background:var(--bg);color:var(--ink);padding:10px;min-width:46px;font:9px 'Press Start 2P',monospace;cursor:pointer}
+.checkout-sizes button[aria-pressed="true"]{border-color:var(--yel);color:var(--yel);background:#2b2350}
+.checkout-sizes button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.checkout-status{border-left:3px solid var(--pink);padding:8px 10px;background:#231039;color:var(--dim);font-size:19px;line-height:1.25}
+.checkout-pay{font:10px/1.7 'Press Start 2P',monospace;padding:15px 16px;background:var(--yel);color:var(--bg);border:2px solid var(--yel);box-shadow:4px 4px 0 #000;cursor:pointer;text-align:center}
+.checkout-pay:focus-visible,.checkout-pay:hover:not(:disabled){outline:2px solid var(--cyan);outline-offset:2px;background:#fff}
+.checkout-pay:disabled{cursor:not-allowed;opacity:.6;background:var(--line);border-color:var(--line);color:var(--dim)}
+.checkout-secure{display:flex;align-items:center;gap:8px;color:var(--faint);font-size:17px}
+.checkout-secure .lock{color:var(--grn)}
+body.checkout-open{overflow:hidden}
+@media(max-width:620px){.checkout-window{max-height:calc(100dvh - 28px)}.checkout-columns{grid-template-columns:1fr}.checkout-item{min-height:200px;padding:14px}.checkout-item .spin{transform:scale(.68);margin:-18px 0}.checkout-details{padding:17px}.checkout-stepper{font-size:7px}.checkout-overlay{padding:14px 12px}}
 </style>
 </head>
 <body>
@@ -92,16 +130,47 @@ footer .px{font-size:9px;color:var(--dim);display:block;margin-bottom:8px}
   <span class="px">SEE THE TRUTH SUPPLY</span>
   <span id="foot">Checkout opens on our secure payment page.</span>
 </div></footer>
+
+<!-- Only the store preview happens here. Stripe securely collects payment details on its own checkout page. -->
+<div id="checkoutOverlay" class="checkout-overlay" hidden>
+  <section id="checkoutDialog" class="checkout-window" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle" tabindex="-1">
+    <div class="checkout-top">
+      <span class="checkout-eyebrow">SEE THE TRUTH // CHECKOUT TERMINAL</span>
+      <button type="button" class="checkout-close" id="checkoutClose" aria-label="Close checkout preview">X</button>
+    </div>
+    <div class="checkout-stepper" aria-label="Checkout steps"><span class="active">01 SELECT</span><span>02 STRIPE PAY</span><span>03 COMPLETE</span></div>
+    <div class="checkout-columns">
+      <div class="checkout-item">
+        <div id="checkoutSprite" class="spin" role="img" aria-label="Animated shirt"></div>
+        <div class="checkout-item-label">PLAYER EQUIPMENT // REAL-WORLD DROP</div>
+      </div>
+      <div class="checkout-details">
+        <div class="checkout-type" id="checkoutType"></div>
+        <h2 id="checkoutTitle"></h2>
+        <div class="checkout-price"><span class="label">ITEM PRICE</span><span class="value" id="checkoutPrice">PRICE SOON</span></div>
+        <div id="checkoutSize" aria-live="polite"></div>
+        <p class="checkout-status" id="checkoutStatus" role="status"></p>
+        <button type="button" id="checkoutPay" class="checkout-pay" disabled>PAYMENT OFFLINE</button>
+        <div class="checkout-secure"><span class="lock" aria-hidden="true">[+]</span><span>Payment and shipping details collected securely by Stripe, not by the game.</span></div>
+      </div>
+    </div>
+  </section>
+</div>
 <script>
 /* ================= STORE SETUP =================
+   Product dashboard URLs are NOT customer checkout links.
+   Use an actual Stripe Payment Link (usually https://buy.stripe.com/...).
    For each shirt fill in:
      price : what it costs, e.g. '$35'
      link  : your checkout link (a Stripe Payment Link, Shopify / Big Cartel product page, etc.)
      links : OR one checkout link per size, e.g. {S:'https://...', M:'https://...'}; then the size buttons decide where BUY goes
    Leave link/links empty and the button shows DROPPING SOON. */
+// Owner confirmed the mapping of the two customer-facing Stripe Payment Links.
+// Owner verified prices ($20 and $25), required size selection, and shipping
+// address collection in Stripe. Stripe remains the payment authority at checkout.
 const STORE={
-  diamond:{price:'',link:'',links:null,sizes:['S','M','L','XL','2XL']},
-  onyx:   {price:'',link:'',links:null,sizes:['S','M','L','XL','2XL']}
+  diamond:{price:'$20',link:'https://buy.stripe.com/4gM28k4P3a8C3utciabwk00',links:null,confirmed:true,sizes:['S','M','L','XL','2XL']},
+  onyx:   {price:'$25',link:'https://buy.stripe.com/9B600cchvfsW8ON4PIbwk01',links:null,confirmed:true,sizes:['S','M','L','XL','2XL']}
 };
 /* ================= the rack (matches the game) ================= */
 const RACK=[
@@ -110,6 +179,93 @@ const RACK=[
   {id:'onyx',name:'AFTER DARK',type:'LONG SLEEVE',img:'shop/onyx.png',fs:64,n:32,fps:9,scale:3.25,col:'#ff4d6d',glow:'#ff4d6d44',tag:'SIGHT + DASH',
    powers:[['TRUE SIGHT','See what is real: hidden cash shows up and fake eyes fade away.'],['SHADOW DASH','Dash as a shadow. Enemies and bolts pass right through you.']]}
 ];
+
+/* ================= ARCADE CHECKOUT TERMINAL =================
+   A themed order preview, NOT a payment form. Payments stay on Stripe.
+   Price, product name and selected size come from the store config.
+   Product IDs alone never activate the payment button. */
+const checkoutOverlay=document.getElementById('checkoutOverlay');
+const checkoutDialog=document.getElementById('checkoutDialog');
+const checkoutClose=document.getElementById('checkoutClose');
+const checkoutPay=document.getElementById('checkoutPay');
+let activeCheckout=null,previousFocus=null;
+const getCheckoutUrl=state=>{
+  if(!state)return '';
+  const cfg=state.cfg;
+  if(cfg.confirmed!==true)return ''; // No live checkout for unconfirmed mappings.
+  const link=cfg.links?cfg.links[state.size]:cfg.link;
+  if(typeof link!=='string'||!link)return '';
+  try{
+    const url=new URL(link);
+    return url.protocol==='https:'?url.href:'';
+  }catch(_){return '';}
+};
+function refreshCheckout(){
+  const {it,cfg}=activeCheckout;
+  document.getElementById('checkoutTitle').textContent=it.name;
+  document.getElementById('checkoutType').textContent=it.type+' // '+it.tag;
+  document.getElementById('checkoutPrice').textContent=cfg.price||(cfg.link?'SEE STRIPE':'PRICE SOON');
+  const sprite=document.getElementById('checkoutSprite');
+  sprite.className='spin sp_'+it.id;
+  sprite.setAttribute('aria-label',it.name+', rotating');
+  const area=document.getElementById('checkoutSize');area.replaceChildren();
+  const label=document.createElement('div');
+  label.className='checkout-size-label';label.textContent='EQUIPMENT SIZE';area.append(label);
+  if(cfg.links){
+    const row=document.createElement('div');row.className='checkout-sizes';row.setAttribute('role','group');row.setAttribute('aria-label','Choose your size');
+    (cfg.sizes||[]).forEach(size=>{
+      const b=document.createElement('button');b.type='button';b.textContent=size;
+      b.setAttribute('aria-pressed',String(activeCheckout.size===size));
+      b.onclick=()=>{activeCheckout.size=size;refreshCheckout();};
+      row.append(b);
+    });area.append(row);
+  }else{
+    const hint=document.createElement('p');
+    hint.className='checkout-size-help';
+    hint.textContent=(cfg.sizes||[]).join('  /  ')+' — select your size on the Stripe payment page.';
+    area.append(hint);
+  }
+  const available=getCheckoutUrl(activeCheckout);
+  const status=document.getElementById('checkoutStatus');
+  const anyLink=!!(cfg.link||(cfg.links&&Object.values(cfg.links).some(Boolean)));
+  if(!anyLink)status.textContent='PREVIEW MODE // This drop is not taking orders yet. Connect the Stripe payment link to go live.';
+  else if(cfg.confirmed!==true)status.textContent='LINK STAGED // Product and price still need to be verified before this checkout can accept orders.';
+  else if(cfg.links&&!activeCheckout.size)status.textContent='Choose a size to continue to secure payment.';
+  else if(cfg.links&&!available)status.textContent='That size is not currently available.';
+  else status.textContent='READY // The next screen is hosted securely by Stripe. Shipping and any taxes are confirmed there.';
+  checkoutPay.disabled=!available;
+  checkoutPay.textContent=available?'CONTINUE TO STRIPE >':'PAYMENT OFFLINE';
+}
+function openCheckout(it,cfg,selectedSize=null){
+  previousFocus=document.activeElement;
+  activeCheckout={it,cfg,size:selectedSize};
+  checkoutOverlay.hidden=false;
+  document.body.classList.add('checkout-open');
+  refreshCheckout();
+  checkoutDialog.focus();
+}
+function closeCheckout(){
+  checkoutOverlay.hidden=true;
+  document.body.classList.remove('checkout-open');
+  activeCheckout=null;
+  if(previousFocus&&typeof previousFocus.focus==='function')previousFocus.focus();
+}
+checkoutClose.addEventListener('click',closeCheckout);
+checkoutOverlay.addEventListener('click',e=>{if(e.target===checkoutOverlay)closeCheckout();});
+checkoutOverlay.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();closeCheckout();return;}
+  if(e.key!=='Tab')return;
+  const focusable=Array.from(checkoutDialog.querySelectorAll('button:not(:disabled)'));
+  if(!focusable.length)return;
+  const first=focusable[0],last=focusable[focusable.length-1];
+  if(e.shiftKey&&(document.activeElement===first||document.activeElement===checkoutDialog)){e.preventDefault();last.focus();}
+  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+});
+checkoutPay.addEventListener('click',()=>{
+  const link=getCheckoutUrl(activeCheckout);
+  if(link)window.location.assign(link);
+});
+
 let found=[];try{found=JSON.parse(localStorage.getItem('stt_shirts')||'[]');}catch(e){}
 const grid=document.getElementById('grid'),css=document.createElement('style');document.head.appendChild(css);let rules='';
 const el=(t,a={},...k)=>{const e=document.createElement(t);for(const [n,v] of Object.entries(a)){if(n==='class')e.className=v;else if(n==='text')e.textContent=v;else e.setAttribute(n,v);}k.forEach(c=>c&&e.append(c));return e;};
@@ -121,23 +277,25 @@ RACK.forEach(it=>{const cfg=STORE[it.id]||{},size=Math.round(it.fs*it.scale),str
   if(has)stage.append(el('span',{class:'found px',text:'✓ FOUND IN-GAME'}));
   const powers=el('div',{class:'powers'},el('h3',{class:'px',text:'IN-GAME POWERS'}));it.powers.forEach(([n,d])=>powers.append(el('div',{class:'pw'},el('b',{text:n}),el('span',{text:d}))));
   const note=el('div',{class:'note',role:'status'});
-  const live=!!(cfg.link||(cfg.links&&Object.values(cfg.links).some(Boolean)));
-  const buy=el('a',{class:'buy',href:'#','aria-disabled':live?'false':'true'});buy.textContent=live?'BUY':'DROPPING SOON';
+  const live=cfg.confirmed===true&&!!(cfg.link||(cfg.links&&Object.values(cfg.links).some(Boolean)));
+  const buy=el('a',{class:'buy',href:'#','aria-disabled':live?'false':'true'});buy.textContent=live?'BUY':(cfg.link?'LINK PENDING':'DROPPING SOON');
+  const preview=el('button',{class:'checkout-ghost',type:'button',text:'VIEW CHECKOUT TERMINAL'});
+  preview.onclick=()=>openCheckout(it,cfg,pick);
   const body=el('div',{class:'body'},el('div',{},el('div',{class:'name px',text:it.name}),el('div',{class:'type px',text:it.type})),powers);
   if(sizes.length&&!cfg.links)body.append(el('div',{class:'type px',text:'SIZES  '+sizes.join(' \u00b7 ')+(live?'  (PICK AT CHECKOUT)':'')}));
   if(sizes.length&&cfg.links){const row=el('div',{class:'sizes',role:'group','aria-label':'Size'});sizes.forEach(s=>{const b=el('button',{type:'button','aria-pressed':'false',text:s});
       b.onclick=()=>{pick=s;row.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));note.textContent='';};row.append(b);});body.append(row);}
-  body.append(el('div',{class:'buyrow'},el('span',{class:'price px'+(cfg.price?'':' tbd'),text:cfg.price||'PRICE SOON'}),buy),note);
+  body.append(el('div',{class:'buyrow'},el('span',{class:'price px'+(cfg.price?'':' tbd'),text:cfg.price||(cfg.link?'SEE STRIPE':'PRICE SOON')}),buy),preview,note);
   buy.onclick=e=>{e.preventDefault();if(!live){note.textContent='Not on sale yet. Check back soon.';return;}
     let url=cfg.link;if(cfg.links){if(!pick){note.textContent='Pick a size first.';return;}url=cfg.links[pick];if(!url){note.textContent='Size '+pick+' is sold out.';return;}}
-    window.open(url,'_blank','noopener');};
+    openCheckout(it,cfg,pick);};
   card.append(stage,body);grid.append(card);});
 // one more card for shirts still hidden in the game
 grid.append(el('article',{class:'card soon'},el('div',{class:'stage'},el('div',{class:'qm px',text:'?'})),
   el('div',{class:'body'},el('div',{},el('div',{class:'name px',text:'MORE OUT THERE'}),el('div',{class:'type px',text:'NEXT DROP'})),
     el('div',{class:'note',text:'New shirts show up in the game first. Find them, then come back here.'}))));
 css.textContent=rules;
-if(!Object.values(STORE).some(c=>c.link||(c.links&&Object.values(c.links).some(Boolean))))document.getElementById('foot').textContent='The store opens soon. Prices and checkout are on the way.';
+if(!Object.values(STORE).some(c=>c.confirmed===true&&(c.link||(c.links&&Object.values(c.links).some(Boolean)))))document.getElementById('foot').textContent='Stripe links are staged, pending product and price verification. Checkout is not live.';
 // opened from the game with #diamond / #onyx: jump to that shirt and flash it
 function focusHash(){const id=location.hash.slice(1),c=id&&document.getElementById(id);if(!c||!c.classList.contains('card'))return;c.scrollIntoView({behavior:'smooth',block:'center'});c.classList.remove('focus');void c.offsetWidth;c.classList.add('focus');}
 addEventListener('hashchange',focusHash);requestAnimationFrame(focusHash);
