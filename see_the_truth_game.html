@@ -4794,6 +4794,11 @@ function trKeepStore(){if(!TR.keep)return;try{if(TR.keep.on==null)localStorage.r
   else if(!TR.on&&TR.keep){SH_OWN=TR.keep.own;SH_ON=TR.keep.on;trKeepStore();TR.keep=null;}};}
 // swapping shirts in training changes the moveset there, never the shirt you wear in the story
 {const sw=window.shirtSwap;window.shirtSwap=function(){const r=sw.apply(this,arguments);if(TR.keep){TR.ms=Math.max(0,TRMS.findIndex(m=>m.id===SH_ON));trKeepStore();trSave();}return r;};}
+// passive training: enemies never get alerted (no "!", no alert sound, no alert animation)
+const TR_PASSIVE=()=>typeof TR!=='undefined'&&TR.on&&!TR.aggro;
+{const _b=botAlert;botAlert=function(o){if(TR_PASSIVE())return;return _b(o);};}
+{const _p=pop;pop=function(x,y,t,c){if(TR_PASSIVE()&&t==='!')return;return _p(x,y,t,c);};}
+{const _s=sfxAt;sfxAt=function(n,...a){if(TR_PASSIVE()&&/Alert/.test(n))return;return _s(n,...a);};}
 // pause menu: TRAINING page + RESET ROUND
 {const _p=pauseChoose;pauseChoose=function(){const c=PMENU[psel];if(TR.on&&c==='TRAINING'){pview='training';TR.sel=0;return;}if(TR.on&&c==='RESET ROUND'){setPause(false);trReset();return;}return _p();};}
 const TRROWS=[{l:'MOVESET',t:'ms'},{l:'ENEMY',t:'pick'},{l:'HOW MANY',t:'num'},{l:'AGGRESSION',t:'tog',k:'aggro'},{l:'INFINITE HP',t:'tog',k:'inf'},{l:'RESET ROUND',t:'go'},{l:'BACK TO TRAINING',t:'back'}];
