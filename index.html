@@ -53,7 +53,7 @@ body.edit #edithelp{display:block}
 </head>
 <body>
 <canvas id="c" width="320" height="224"></canvas>
-<p id="hint">ARROWS MOVE · SHIFT RUN · A DASH · SPACE / UP JUMP · Z PUNCH (HOLD = HEAVY) · X CROUCH · C PUFF · V MONEY · ENTER CONFIRM<br>XBOX: A JUMP · X HIT · B DASH · Y PUFF · LB $ · LT DUCK · RB/RT RUN · MENU PAUSE</p>
+<p id="hint">ARROWS / WASD MOVE · SHIFT RUN · F DASH · SPACE / W JUMP · Z / LEFT CLICK PUNCH (HOLD = HEAVY) · X CROUCH · C PUFF · V MONEY · ENTER CONFIRM<br>XBOX: A JUMP · X HIT · B DASH · Y PUFF · LB $ · LT DUCK · RB/RT RUN · MENU PAUSE</p>
 <div id="pad" aria-label="Touch controls">
   <div class="ctl dpad" id="dpad" data-id="dpad"><span class="nub"></span><i class="u"></i><i class="l"></i><i class="r"></i><i class="d"></i></div>
   <button class="ctl b pill run" id="runb" data-id="run" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M13 3l-8 11h6l-2 7 9-12h-6z"/></svg><span>RUN</span></button>
@@ -219,7 +219,7 @@ const keys={},hit={};let G=0,scene='title',s0=0,trans=null,menuOpen=false,sel=0,
 const hasSave=()=>{try{return localStorage.getItem('stt_save')==='1';}catch(e){return false;}};
 const doSave=()=>{try{localStorage.setItem('stt_save','1');}catch(e){}};
 function go(to){if(trans)return;trans={to,t:0,sw:0};}
-function enterScene(s){if(typeof MOUSE_CAM!=="undefined")MOUSE_CAM.active=false;s0=G;fx.length=0;paused=false;if(s==='cutscene')cs={i:0,tl:0};if(s==='select')PLAYLV=null;if(s==='play'){const kp=NEXTLV?[cash,RUN.t,RUN.hits,RUN.kos,P.hp]:null;if(!NEXTLV&&!PLAYLV&&(LEVELS[lsel]||{}).id==='boss'&&eyeDone()&&!EYE.rematch)NEXTLV='eye';loadLevel(NEXTLV||PLAYLV||(LEVELS[lsel]||LEVELS[0]).id);NEXTLV=null;resetPlay();EYEKP=kp;if(kp){EYE_DEATHS=0;cash=kp[0];RUN.t=kp[1];RUN.hits=kp[2];RUN.kos=kp[3];P.hp=Math.max(1,kp[4]);}doSave();}if(s==='title'){menuOpen=false;sel=0;if(titleSkip){titleSkip=false;s0=G-3;menuOpen=true;sel=TSEL;TSEL=2;}}if(s==='select'){SUB.open=0;SUB.ride=0;mapEnter();}if(s==='chill')chillEnter();if(s==='void')voidEnter();
+function enterScene(s){if(typeof MOUSE_CAM!=="undefined")MOUSE_CAM.active=false;if(typeof mouseAttackRelease==='function')mouseAttackRelease();s0=G;fx.length=0;paused=false;if(s==='cutscene')cs={i:0,tl:0};if(s==='select')PLAYLV=null;if(s==='play'){const kp=NEXTLV?[cash,RUN.t,RUN.hits,RUN.kos,P.hp]:null;if(!NEXTLV&&!PLAYLV&&(LEVELS[lsel]||{}).id==='boss'&&eyeDone()&&!EYE.rematch)NEXTLV='eye';loadLevel(NEXTLV||PLAYLV||(LEVELS[lsel]||LEVELS[0]).id);NEXTLV=null;resetPlay();EYEKP=kp;if(kp){EYE_DEATHS=0;cash=kp[0];RUN.t=kp[1];RUN.hits=kp[2];RUN.kos=kp[3];P.hp=Math.max(1,kp[4]);}doSave();}if(s==='title'){menuOpen=false;sel=0;if(titleSkip){titleSkip=false;s0=G-3;menuOpen=true;sel=TSEL;TSEL=2;}}if(s==='select'){SUB.open=0;SUB.ride=0;mapEnter();}if(s==='chill')chillEnter();if(s==='void')voidEnter();
   LIGHT=s==='title'?1:s==='cutscene'?.45:s==='act'?.5:s==='play'?.22:0;}
 const MENU=['NEW GAME','CONTINUE','LEVEL SELECT'];
 let wipeT=-9;
@@ -385,19 +385,23 @@ const MV={sprint:170,slideV:158,slideDec:175,slideMin:42,slideMax:.8,run:110,acc
   crawl:32,back:46,punchMove:.35,landLock:.08};
 const P={x:SX,y:SY,vx:0,vy:0,face:1,st:'idle',t:0,air:false,hp:3,inv:0,fl:0,qs:0,jb:0,coy:0,jhold:false,gy:SY,look:20,snap:1},orbs=[];
 let camX=0,camY=0,camXf=0,camYf=0;
-// Optional mouse-look camera. No mouse movement = the original follow-camera.
-// The pointer only changes the view: it never moves Onyx or triggers actions.
+// Mouse camera: cursor position relative to the *displayed* canvas. Works
+// with a held mouse button too, and only uses mouse input (not touch).
 const MOUSE_CAM={active:false,x:0,y:0};
-cv.addEventListener('mousemove',e=>{
-  if(scene!=='play'||paused||e.buttons){MOUSE_CAM.active=false;return;}
+function mouseCamPoint(e){
+  if(e.pointerType&&e.pointerType!=='mouse')return;
+  if(scene!=='play'||paused||trans||won||OVER){MOUSE_CAM.active=false;return;}
   const r=cv.getBoundingClientRect();
   if(!r.width||!r.height)return;
-  // Normalize to -1..1; a mouse at screen center gives the default view.
-  MOUSE_CAM.x=Math.max(-1,Math.min(1,((e.clientX-r.left)/r.width-.5)*2));
-  MOUSE_CAM.y=Math.max(-1,Math.min(1,((e.clientY-r.top)/r.height-.5)*2));
+  if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom){MOUSE_CAM.active=false;return;}
+  // Aiming toward an edge pans farther in that direction. Center = normal follow.
+  MOUSE_CAM.x=Math.max(-1,Math.min(1,(e.clientX-r.left)/r.width*2-1));
+  MOUSE_CAM.y=Math.max(-1,Math.min(1,(e.clientY-r.top)/r.height*2-1));
   MOUSE_CAM.active=true;
-});
-cv.addEventListener('mouseleave',()=>{MOUSE_CAM.active=false;});
+}
+addEventListener('pointermove',mouseCamPoint,{passive:true});
+cv.addEventListener('pointerenter',mouseCamPoint,{passive:true});
+cv.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse')MOUSE_CAM.active=false;});
 
 function resetPlay(){Object.assign(P,{x:SX,y:SY,vx:0,vy:0,face:1,st:'idle',t:0,air:false,hp:MAXHP(),inv:0,fl:0,qs:0,jb:0,coy:0,jhold:false,gy:SY,look:20,snap:1});CRIB.tw=null;CRIB.look=null;CRIB.near=null;CRIB.talk=null;chk.x=SX;chk.y=SY;won=false;OVER=null;WIN=null;RUN.t=0;RUN.hits=0;RUN.kos=0;RUN.wind=0;orbs.length=0;
   cash=0;found=0;pops=[];clouds=[];baits=[];drops=[];IMP=null;P.ghosts=[];P.airDash=0;P.dashCD=0;resetSecrets();initSolid();resetPickups();buildLevel();
@@ -554,8 +558,9 @@ function updateCam(dt){
   const lookT=Math.abs(P.vx)>30?Math.sign(P.vx)*46:P.face*22;P.look+=(lookT-P.look)*Math.min(1,dt*2.2);
   const T1=150/Z,T2=64/Z,T3=196/Z;let ty=P.gy-T1;const sy=P.y-camYf;if(sy<T2)ty=P.y-T2;else if(sy>T3)ty=P.y-T3;
   const mouseLook=MOUSE_CAM.active&&scene==='play'&&!paused&&!trans&&!won&&!OVER&&!BOSS.lock;
-  const mx=mouseLook?MOUSE_CAM.x*Math.min(90,VW*.3):0;
-  const my=mouseLook?MOUSE_CAM.y*Math.min(48,VH*.22):0;
+  // Stronger, visible pan; zoom-adjusted and bounded by level size below.
+  const mx=mouseLook?MOUSE_CAM.x*Math.min(180,VW*.65):0;
+  const my=mouseLook?MOUSE_CAM.y*Math.min(100,VH*.55):0;
   const tx=P.x-VW/2+P.look+mx;ty+=my;
   const cl=(v,a)=>Math.min(Math.max(0,a),Math.max(0,v));
   if(P.snap){camXf=cl(P.x-VW/2,MW*TS-VW);camYf=cl(P.y-T1,MH*TS-VH);P.snap=0;}
@@ -4729,6 +4734,7 @@ function keyboardMappedUp(code){
   const target=WASD_TO_ARROW[code]||(code==='KeyF'?'KeyA':code);
   // Releasing one of two equivalent physical keys must not cancel the other.
   if([...keyboardHeld].some(c=>(WASD_TO_ARROW[c]||(c==='KeyF'?'KeyA':c))===target))return;
+  if(target==='KeyZ'&&typeof mouseAttackHeld!=='undefined'&&mouseAttackHeld)return;
   keyUp(target);
 }
 addEventListener('keydown',e=>{
@@ -4762,6 +4768,30 @@ document.querySelectorAll('#pad .b[data-k]').forEach(b=>{const code=b.dataset.k;
   b.addEventListener('contextmenu',e=>e.preventDefault());});
 document.getElementById('pad').addEventListener('touchstart',e=>e.preventDefault(),{passive:false});
 addEventListener('pointerdown',()=>muGesture(),true);
+// Left mouse button = physical Z attack, including hold-to-charge/heavy.
+// Capture before the legacy canvas-click UI handler, which otherwise pauses
+// gameplay on ordinary clicks. UI clicks, dialogue, touch, and other scenes
+// continue through their original handlers unchanged.
+let mouseAttackHeld=false;
+function mouseAttackRelease(){
+  if(!mouseAttackHeld)return;
+  mouseAttackHeld=false;
+  if(!keyboardHeld.has('KeyZ'))keyUp('KeyZ');
+}
+cv.addEventListener('pointerdown',e=>{
+  if(e.pointerType!=='mouse'||e.button!==0||scene!=='play'||paused||trans||won||OVER||
+     BOSS.talk||CRIB.look||CRIB.talk||EYE.card)return;
+  const r=cv.getBoundingClientRect();
+  const x=(e.clientX-r.left)/r.width*W,y=(e.clientY-r.top)/r.height*H;
+  // Keep the HUD's shirt/ability controls and pause button clickable.
+  if((y>16&&y<40&&x<60)||(x>268&&y<32))return;
+  e.preventDefault();e.stopImmediatePropagation();
+  mouseCamPoint(e);
+  if(!mouseAttackHeld){mouseAttackHeld=true;INPUT='kb';muGesture();keyDown('KeyZ');}
+},{capture:true});
+addEventListener('pointerup',e=>{if(e.pointerType==='mouse'&&e.button===0)mouseAttackRelease();});
+addEventListener('pointercancel',mouseAttackRelease);
+addEventListener('blur',mouseAttackRelease);
 cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W,y=(e.clientY-r.top)/r.height*H;
   if(trans)return;
   {const br=backRect();if(br&&x>=br[0]-2&&x<br[0]+br[2]+2&&y>=br[1]-2&&y<br[1]+br[3]+2){goBack();return;}}
