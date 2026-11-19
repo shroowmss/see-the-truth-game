@@ -1156,7 +1156,7 @@ const FCR={"idle":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14],"wait":[15,16,17,18,19,20
 for(const k in FCR)ANIM['fc_'+k]={f:FCR[k].map(j=>4000+j),fps:1};
 {const _spr=spr;spr=function(n,t,x,y,flip,shear){const i=fidx(n,t);if(i<4000||i>=5000)return _spr(n,t,x,y,flip,shear);const j=i-4000,S=FCS;
   ctx.save();ctx.translate(Math.round(x),Math.round(y));if(SPR_S!==1)ctx.scale(SPR_S,SPR_S);if(flip)ctx.scale(-1,1);if(shear)ctx.transform(1,0,shear,1,0,0);
-  if(IMG.fcs.complete&&IMG.fcs.naturalWidth)ctx.drawImage(IMG.fcs,(j%S.COLS)*S.CW,Math.floor(j/S.COLS)*S.CH,S.CW,S.CH,-S.AX,-S.AY,S.CW,S.CH);ctx.restore();};}
+  if(IMG.fcs.complete&&IMG.fcs.naturalWidth)ctx.drawImage(IMG.fcs,(j%S.COLS)*S.CW,Math.floor(j/S.COLS)*S.CH,S.CW,S.CH,-S.AX+(FCDXJ[j]||0),-S.AY,S.CW,S.CH);ctx.restore();};}
 const FC_ON=()=>WEAR('diamond')&&IMG.fcs.complete&&IMG.fcs.naturalWidth;
 const fcAt=(a,t)=>a[Math.min(a.length-1,Math.max(0,Math.floor(t)))];
 const FCT={hr:[0,1,2,3,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,12,13,13,13,14,14],
@@ -1287,7 +1287,7 @@ const ADR={"idle":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14],"wait":[15,16,17,18,19,20
 for(const k in ADR)ANIM['ad_'+k]={f:ADR[k].map(j=>5000+j),fps:1};
 {const _spr=spr;spr=function(n,t,x,y,flip,shear){const i=fidx(n,t);if(i<5000||i>=6000)return _spr(n,t,x,y,flip,shear);const j=i-5000,S=ADS;
   ctx.save();ctx.translate(Math.round(x),Math.round(y));if(SPR_S!==1)ctx.scale(SPR_S,SPR_S);if(flip)ctx.scale(-1,1);if(shear)ctx.transform(1,0,shear,1,0,0);
-  if(IMG.ads.complete&&IMG.ads.naturalWidth)ctx.drawImage(IMG.ads,(j%S.COLS)*S.CW,Math.floor(j/S.COLS)*S.CH,S.CW,S.CH,-S.AX,-S.AY,S.CW,S.CH);ctx.restore();};}
+  if(IMG.ads.complete&&IMG.ads.naturalWidth)ctx.drawImage(IMG.ads,(j%S.COLS)*S.CW,Math.floor(j/S.COLS)*S.CH,S.CW,S.CH,-S.AX+(ADDXJ[j]||0),-S.AY,S.CW,S.CH);ctx.restore();};}
 const AD_ON=()=>WEAR('onyx')&&IMG.ads.complete&&IMG.ads.naturalWidth;
 const ADT={
   jab:[0,1,1,2,3,3,3,2,1,1,0,0,0],cross:[4,5,5,6,7,7,8,8,9],fin:[10,11,11,12,12,12,12,13,13,13,14,14,14],spin:[0,2,3,4,5,6,7,8,9,10,11,12,14],
@@ -1396,6 +1396,8 @@ function adDrawFront(){const cx=camX,cy=camY;let dk=0;
 {const _ho=hitOrb;hitOrb=function(o,w){const r=_ho(o,w);if(AD_ON()&&o){const y=(typeof foeY==='function'?foeY(o):o.y)-22,big=w&&(w.heavy||w.fin||w.dmg>=2),dd=P.x<o.x?1:-1;
   adSlash(o.x,y,dd,big);adEmbers(o.x,y,big?9:5,big?120:80,dd,30);adSmoke(o.x,y,big?3:1,30,dd,4);}return r;};}
 
+// line every row of the new movesets up with base Onyx's body, so moves flow into each other without a sideways jump
+const FCDX={"idle":7,"wait":7,"shield":7,"hcharge":8,"hrelease":8,"dash":8,"walk":10,"sprint":9,"jump":7,"rstrike":7,"acombo":7,"dslam":5},ADDX={"idle":13,"wait":12,"tsight":10,"walk":11,"sprint":10,"jump":11,"hcharge":12,"hrelease":12,"dash":10,"acombo":9,"rstrike":10,"dslam":8,"combo":11,"upper":12,"spin":9},FCDXJ=[],ADDXJ=[];for(const k in FCR)for(const j of FCR[k])FCDXJ[j]=FCDX[k]||0;for(const k in ADR)for(const j of ADR[k])ADDXJ[j]=ADDX[k]||0;
 // ---- AFTER DARK idle aura: a flickering black haze with a red rim that hugs his outline while he stands still, with smoke wisps off the shoulders
 const ADA={oc:null,ox:null,a:0,last:0,w:0};
 function adAuraDraw(){const r=playAnim(),n=r[0],on=AD_ON()&&scene==='play'&&(n==='ad_idle'||n==='ad_wait'||n==='ad_tsight');
@@ -1406,7 +1408,7 @@ function adAuraDraw(){const r=playAnim(),n=r[0],on=AD_ON()&&scene==='play'&&(n==
     o.globalCompositeOperation='source-in';o.fillStyle=col;o.fillRect(0,0,S.CW,S.CH);const c=document.createElement('canvas');c.width=S.CW;c.height=S.CH;c.getContext('2d').drawImage(ADA.oc,0,0);cs.push(c);}
   const Z=LEVEL.onyxS||1,x=Math.round(P.x-camX),y=Math.round(P.y-camY+FOOT+FO(P.y)),A=ADA.a,t=G;
   ctx.save();ctx.translate(x,y);if(Z!==1)ctx.scale(Z,Z);if(P.face<0)ctx.scale(-1,1);
-  const blit=(c,dx,dy,al)=>{ctx.globalAlpha=al*A;ctx.drawImage(c,-S.AX+dx,-S.AY+dy);};
+  const ox=ADDXJ[j]||0,blit=(c,dx,dy,al)=>{ctx.globalAlpha=al*A;ctx.drawImage(c,-S.AX+dx+ox,-S.AY+dy);};
   // outer red rim, flickering upward like flame
   const f1=Math.sin(t*9)*.5+.5,f2=Math.sin(t*13+1.7)*.5+.5;
   for(const [dx,dy] of [[-3,0],[3,0],[0,-4],[-2,-3],[2,-3],[-2,2],[2,2],[0,-5-Math.round(f1*2)]])blit(cs[0],dx,dy,.16+.16*f2);
