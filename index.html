@@ -53,7 +53,7 @@ body.edit #edithelp{display:block}
 </head>
 <body>
 <canvas id="c" width="320" height="224"></canvas>
-<p id="hint">ARROWS MOVE · SHIFT RUN · A DASH · SPACE JUMP · Z PUNCH (HOLD = HEAVY) · X CROUCH · C PUFF · V MONEY · ENTER CONFIRM<br>XBOX: A JUMP · X HIT · B DASH · Y PUFF · LB $ · LT DUCK · RB/RT RUN · MENU PAUSE</p>
+<p id="hint">ARROWS MOVE · SHIFT RUN · A DASH · SPACE / UP JUMP · Z PUNCH (HOLD = HEAVY) · X CROUCH · C PUFF · V MONEY · ENTER CONFIRM<br>XBOX: A JUMP · X HIT · B DASH · Y PUFF · LB $ · LT DUCK · RB/RT RUN · MENU PAUSE</p>
 <div id="pad" aria-label="Touch controls">
   <div class="ctl dpad" id="dpad" data-id="dpad"><span class="nub"></span><i class="u"></i><i class="l"></i><i class="r"></i><i class="d"></i></div>
   <button class="ctl b pill run" id="runb" data-id="run" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M13 3l-8 11h6l-2 7 9-12h-6z"/></svg><span>RUN</span></button>
@@ -268,7 +268,7 @@ function drawAct(){
   {const lv=LEVELS[lsel]||LEVELS[0];T(lv.label,CX,104,16,'#ff9be8','center','#12042c');T(lv.name+(lv.id==='1-1'?' :(':''),CX,134,16,'#a8f4ff','center','#12042c');}ctx.globalAlpha=1;
   if(ts>3.4)go(afterAct);
 }
-const CTRL=[['WALK','<->'],['SPRINT','SHIFT+<->'],['BACK WALK','UP+<->'],['JUMP','SPACE'],['CROUCH','X'],['CROUCH WALK','X+<->'],['SLIDE','<->+X'],['CIGAR PUFF','C'],['$ MONEY','V'],
+const CTRL=[['WALK','<->'],['SPRINT','SHIFT+<->'],['BACK WALK','UP+<->'],['JUMP','SPACE / UP'],['CROUCH','X'],['CROUCH WALK','X+<->'],['SLIDE','<->+X'],['CIGAR PUFF','C'],['$ MONEY','V'],
  ['COMBO','Z,Z,Z'],['HEAVY','HOLD Z'],['LAUNCHER','UP+Z'],['DASH PUNCH','RUN+Z'],['AIR COMBO','UP+Z,SPACE,Z'],['AIR SLAM','AIR+DOWN+Z'],['SPIN FIST','BACK+Z'],['DASH','A'],['DROP','DOWN']];
 const CTRL_PAD=[['WALK','[LS]'],['SPRINT','[RT]+[LS]'],['BACK WALK','UP+[LS]'],['JUMP','[A]'],['CROUCH','[LT]'],['CROUCH WALK','[LT]+[LS]'],['SLIDE','[LS]+[LT]'],['CIGAR PUFF','[Y]'],['$ MONEY','[LB]'],
  ['COMBO','[X][X][X]'],['HEAVY','HOLD [X]'],['LAUNCHER','UP+[X]'],['DASH PUNCH','[RT]+[X]'],['AIR COMBO','UP+[X],[A],[X]'],['AIR SLAM','AIR+DOWN+[X]'],['SPIN FIST','BACK+[X]'],['DASH','[B]'],['DROP','[LS] DOWN']];
@@ -414,9 +414,10 @@ function throwBait(){cash-=LURE_COST;pop(P.x,P.y-46,'-$'+LURE_COST,'#ff9be8');
 function updatePlayer(dt){
   diaUpdate(dt);P.t+=dt;P.inv=Math.max(0,P.inv-dt);const dir=(keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0);
   // input forgiveness: remember a jump press briefly, and allow jumping just after leaving a ledge
-  P.jb=hit.Space?MV.buffer:Math.max(0,P.jb-dt);
+  if(hit.Space)P.ujh=0;
+  P.jb=(hit.Space||upJump())?MV.buffer:Math.max(0,P.jb-dt);
   P.coy=P.air?Math.max(0,P.coy-dt):MV.coyote;
-  if(!keys.Space)P.jhold=false;
+  if(!keys.Space&&!(P.ujh&&keys.ArrowUp))P.jhold=false;
   if(!P.air&&!sup()){P.air=true;P.vy=0;if(!['hurt','airp','puff','upc','dash'].concat(AERST).includes(P.st)||P.st==='slide'){setSt('jump');P.t=.2;}}
   let s=P.st;
   // ---- jump (also cancels punch, money moves, landing, and the tail of the puff)
@@ -1705,6 +1706,11 @@ function aerStart(s){setSt(s);P.ast=G;P.hitset=new Set();if(s==='aslam'){P.vy=Ma
 function aerChase(){if(!hit.Space||P.chased||G-(P.chaseT||-9)>.7)return false;let tg=null,bd=170;for(const o of botsA)if(o.alive&&o.jug){const d=Math.hypot(o.x-P.x,o.y-18-(P.y-22));if(d<bd){bd=d;tg=o;}}
   if(!tg)return false;P.face=tg.x>=P.x?1:-1;P.chased=1;P.jb=0;P.chaseDn=keys.ArrowDown?1:0;aerStart('achase');if(P.chaseDn)pop(P.x,P.y-58,'DRIVE!','#ffe66d');P.vy=Math.max(-220,Math.min(40,(tg.y-6-P.y)*4));P.stall=.3;return true;}
 {const _k=keyDown;keyDown=function(c){if(c==='KeyA'&&!keys.KeyA&&scene==='play')P.adq=G;return _k(c);};}
+// UP jumps too: it waits a 70 ms beat, and a Z pressed inside that beat makes the Up+Z uppercut launcher instead of a jump
+{const _k=keyDown;keyDown=function(c){if(scene==='play'&&!paused){if(c==='ArrowUp'&&!keys.ArrowUp)P.ujq=G;else if(c==='KeyZ')P.ujq=0;}return _k(c);};}
+function upJump(){if(!P.ujq||G-P.ujq<.07)return false;P.ujq=0;
+  if(P.st==='atk'||P.st==='upc'||P.st==='hvc'||P.st==='hvr'||(typeof CRIB!=='undefined'&&CRIB.near)||(typeof EYE!=='undefined'&&EYE.near)||(typeof catNear==='function'&&catNear())||(typeof BOSS!=='undefined'&&BOSS.talk))return false;
+  P.ujh=1;return true;}
 // air dash cross-up: dash at a launched enemy in the air and you go straight through them, turn around behind them and keep your height
 function xdashFind(){let best=null,bd=1e9;for(const o of botsA){if(!o.alive||!o.jug)continue;const dx=(o.x-P.x)*P.face,dy=Math.abs((o.y-18)-(P.y-22));if(dx>-6&&dx<96&&dy<56&&dx<bd){bd=dx;best=o;}}return best;}
 {const _sd=startDash;startDash=function(dir){_sd(dir);P.xdash=null;if(!P.air)return;const o=xdashFind();if(!o)return;
