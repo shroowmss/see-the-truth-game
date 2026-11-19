@@ -4753,7 +4753,7 @@ function trStep(){if(!TR.on||paused)return;if(TR.inf){P.hp=Math.max(P.hp,MAXHP()
   if(!botsA.some(o=>o.alive)){TR.respT+=1/60;if(TR.respT>1.2)trSpawn();}}
 {const _d=drawPlay;drawPlay=function(dt){_d(dt);if(!TR.on)return;trStep();if(paused)return;
   // top banner: what you're fighting and how
-  const e=TRE[TR.ei],lab=e.n+(TR.n>1?' x'+TR.n:'');px(CX-80,22,160,22,'rgba(10,4,32,.72)');px(CX-80,22,160,1,'#ff5ee8');
+  const e=TRE[TR.ei],lab=e.n+(TR.n>1?' x'+TR.n:'')+'   VS   '+(SH_ON?SHIRTS[SH_ON].name:'BASE ONYX');px(CX-104,22,208,22,'rgba(10,4,32,.72)');px(CX-104,22,208,1,'#ff5ee8');
   T(lab,CX,32,8,'#ffffff','center');T((TR.aggro?'FIGHTS BACK':'PASSIVE')+'  -  '+(TR.inf?'INFINITE HP':'NORMAL HP'),CX,41,8,TR.aggro?'#ff8aa0':'#8ff0ff','center');
   // combo counter
   const live=G-TR.last<1.1,show=live||G-TR.last<2.4;
@@ -4762,24 +4762,35 @@ function trStep(){if(!TR.on||paused)return;if(TR.inf){P.hp=Math.max(P.hp,MAXHP()
     T('DMG '+TR.cdmg,x,116,8,'#8ff0ff','right','#12042c');if(live){const k=1-(G-TR.last)/1.1;px(x-40,121,Math.round(40*k),2,'#ff5ee8');}ctx.globalAlpha=1;}
   T('BEST '+TR.best,W-14,134,8,'#7a6aa0','right','#12042c');
   const p=PR('R: RESET   P: TRAINING OPTIONS','[MENU] TRAINING OPTIONS','II: TRAINING OPTIONS');if(p)TP(p,CX,H-8,8,'#7a6aa0','center');};}
+// every moveset in training: base Onyx, FOREVER CHANGING and AFTER DARK, unlocked or not; the real shirts come back when you leave
+const TRMS=[{id:null,n:'BASE ONYX',c:'#c9c0e8'},{id:'diamond',n:'FOREVER CHANGING',c:'#8fe0ff'},{id:'onyx',n:'AFTER DARK',c:'#ff4d6d'}];
+TR.ms=0;try{const s=JSON.parse(localStorage.getItem('stt_tr')||'null');if(s&&s.ms!=null)TR.ms=Math.max(0,Math.min(2,s.ms|0));}catch(e){}
+function trSetMs(i){TR.ms=i;SH_ON=TRMS[i].id;TRU.swT=G;TRU.tog=0;TRU.on=0;if(SH_ON==='diamond'){P.sh=0;P.shT=DIA.recharge;}trKeepStore();trSave();}
+function trKeepStore(){if(!TR.keep)return;try{if(TR.keep.on==null)localStorage.removeItem(SHIRT_ON_K);else localStorage.setItem(SHIRT_ON_K,TR.keep.on);}catch(e){}}
+{const _s=trSave;trSave=function(){_s();try{const o=JSON.parse(localStorage.getItem('stt_tr')||'{}');o.ms=TR.ms;localStorage.setItem('stt_tr',JSON.stringify(o));}catch(e){}};}
+{const _e=enterScene;enterScene=function(s){_e(s);
+  if(TR.on&&!TR.keep){TR.keep={own:SH_OWN.slice(),on:SH_ON};SH_OWN=['diamond','onyx'];trSetMs(TR.ms);}
+  else if(!TR.on&&TR.keep){SH_OWN=TR.keep.own;SH_ON=TR.keep.on;trKeepStore();TR.keep=null;}};}
+// swapping shirts in training changes the moveset there, never the shirt you wear in the story
+{const sw=window.shirtSwap;window.shirtSwap=function(){const r=sw.apply(this,arguments);if(TR.keep){TR.ms=Math.max(0,TRMS.findIndex(m=>m.id===SH_ON));trKeepStore();trSave();}return r;};}
 // pause menu: TRAINING page + RESET ROUND
 {const _p=pauseChoose;pauseChoose=function(){const c=PMENU[psel];if(TR.on&&c==='TRAINING'){pview='training';TR.sel=0;return;}if(TR.on&&c==='RESET ROUND'){setPause(false);trReset();return;}return _p();};}
-const TRROWS=[{l:'ENEMY',t:'pick'},{l:'HOW MANY',t:'num'},{l:'AGGRESSION',t:'tog',k:'aggro'},{l:'INFINITE HP',t:'tog',k:'inf'},{l:'RESET ROUND',t:'go'},{l:'BACK TO TRAINING',t:'back'}];
-function trAdj(i,d){const r=TRROWS[i];if(r.t==='pick'){TR.ei=(TR.ei+d+TRE.length)%TRE.length;trSpawn();}else if(r.t==='num'){TR.n=Math.max(1,Math.min(3,TR.n+d));trSpawn();}else if(r.t==='tog'){TR[r.k]=!TR[r.k];}else return;ui('uiTick');trSave();}
+const TRROWS=[{l:'MOVESET',t:'ms'},{l:'ENEMY',t:'pick'},{l:'HOW MANY',t:'num'},{l:'AGGRESSION',t:'tog',k:'aggro'},{l:'INFINITE HP',t:'tog',k:'inf'},{l:'RESET ROUND',t:'go'},{l:'BACK TO TRAINING',t:'back'}];
+function trAdj(i,d){const r=TRROWS[i];if(r.t==='ms'){trSetMs((TR.ms+d+3)%3);ui('uiTick');return;}if(r.t==='pick'){TR.ei=(TR.ei+d+TRE.length)%TRE.length;trSpawn();}else if(r.t==='num'){TR.n=Math.max(1,Math.min(3,TR.n+d));trSpawn();}else if(r.t==='tog'){TR[r.k]=!TR[r.k];}else return;ui('uiTick');trSave();}
 function trChoose(i){const r=TRROWS[i];if(r.t==='go'){setPause(false);trReset();}else if(r.t==='back')setPause(false);else if(r.t==='tog')trAdj(i,1);else trAdj(i,1);}
 function drawTraining(){ctx.imageSmoothingEnabled=false;ctx.drawImage(PSNAP,0,0);ctx.fillStyle='rgba(8,3,22,.94)';ctx.fillRect(0,0,W,H);
   prr(76,12,16,16,4,'#ff5ee8');px(80,19,8,2,'#fff');px(79,17,2,6,'#fff');px(87,17,2,6,'#fff');
   T('TRAINING',98,24,8,'#ffffff','left');px(8,33,W-16,1,'#8e8e93');
-  TRROWS.forEach((r,i)=>{const y=40+i*25,s=i===TR.sel;px(16,y,W-32,21,s?'rgba(255,255,255,.10)':'rgba(255,255,255,.04)');if(s)px(16,y,2,21,'#ff5ee8');
+  TRROWS.forEach((r,i)=>{const y=40+i*22,s=i===TR.sel;px(16,y,W-32,19,s?'rgba(255,255,255,.10)':'rgba(255,255,255,.04)');if(s)px(16,y,2,19,'#ff5ee8');
     T(r.l,26,y+14,8,s?'#ffffff':'#c8c4e0','left');
-    if(r.t==='pick'||r.t==='num'){const v=r.t==='pick'?TRE[TR.ei].n:String(TR.n);T('<',172,y+14,8,s?'#ff5ee8':'#6a5a98','center');T('>',W-34,y+14,8,s?'#ff5ee8':'#6a5a98','center');
-      T(v,(172+W-34)/2,y+14,8,'#ffffff','center');if(r.t==='pick'){const a=TRE[TR.ei].a;T('ACT '+a,26+TW(r.l,8)+10,y+14,8,a===2?'#8ff0ff':'#ffe66d','left');}}
+    if(r.t==='pick'||r.t==='num'||r.t==='ms'){const v=r.t==='ms'?TRMS[TR.ms].n:r.t==='pick'?TRE[TR.ei].n:String(TR.n);if(r.t==='ms')px(26+TW(r.l)+10,y+7,6,6,TRMS[TR.ms].c);T('<',146,y+14,8,s?'#ff5ee8':'#6a5a98','center');T('>',W-30,y+14,8,s?'#ff5ee8':'#6a5a98','center');
+      T(v,(146+W-30)/2,y+14,8,'#ffffff','center');if(r.t==='pick'){const a=TRE[TR.ei].a;T('ACT '+a,26+TW(r.l,8)+10,y+14,8,a===2?'#8ff0ff':'#ffe66d','left');}}
     else if(r.t==='tog'){const on=TR[r.k];prr(W-62,y+4,28,12,6,on?'#34c759':'#3a3458');ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(on?W-40:W-56,y+10,5,0,7);ctx.fill();
       T(r.k==='aggro'?(on?'FIGHTS BACK':'PASSIVE'):(on?'ON':'OFF'),W-70,y+14,8,on?'#9dffa0':'#7a6aa0','right');}
     else T('>',W-34,y+14,8,s?'#ffffff':'#7a6aa0','center');});
   T('BEST COMBO  '+TR.best+' HITS',CX,H-26,8,'#ffe66d','center');
   const p=PR('UP/DOWN: PICK   LEFT/RIGHT: CHANGE   ENTER: SELECT   ESC: BACK','[LS]: PICK + CHANGE   [A] SELECT   [B] BACK','TAP A ROW  -  TAP < > TO CHANGE');TP(p,CX,H-12,8,'#6a5a98','center');}
-function trTap(x,y){for(let i=0;i<TRROWS.length;i++){const yy=40+i*25;if(y>=yy&&y<yy+21&&x>16&&x<W-16){TR.sel=i;const r=TRROWS[i];if((r.t==='pick'||r.t==='num')&&x>150){trAdj(i,x<(172+W-34)/2?-1:1);}else trChoose(i);return;}}}
+function trTap(x,y){for(let i=0;i<TRROWS.length;i++){const yy=40+i*22;if(y>=yy&&y<yy+19&&x>16&&x<W-16){TR.sel=i;const r=TRROWS[i];if((r.t==='pick'||r.t==='num'||r.t==='ms')&&x>136){trAdj(i,x<(146+W-30)/2?-1:1);}else trChoose(i);return;}}}
 {const _dp=drawPause;drawPause=function(){if(pview==='training'){drawTraining();return;}return _dp();};}
 {const _k=keyDown;keyDown=function(code){
   if(paused&&pview==='training'&&!trans){if(code==='ArrowUp'){TR.sel=(TR.sel+TRROWS.length-1)%TRROWS.length;ui('uiMove');return;}if(code==='ArrowDown'){TR.sel=(TR.sel+1)%TRROWS.length;ui('uiMove');return;}
