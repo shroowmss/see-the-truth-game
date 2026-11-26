@@ -5815,6 +5815,29 @@ function skTap(x,y){const n=skShirts().length;if(y<40&&x<40&&y>20){STKP.sh=(STKP
 try{if(typeof TRROWS!=='undefined'&&!TRROWS.some(r=>r.k==='skOn')){TR.skOn=true;TRROWS.splice(TRROWS.findIndex(r=>r.t==='go'),0,{l:'SKILL TREES',t:'tog',k:'skOn'});}}catch(e){}
 /*SKEND*/
 
+/*OGSND*/// ---- ONYX GARMENTS recorded sounds (crew + paper moves)
+Object.assign(SMP.map,{ogBabyJab:'s_og_baby_jab',ogBabyBonus:'s_og_baby_bonus',ogBabyHold:'s_og_baby_hold',ogBabyPose:'s_og_baby_pose',ogBabyYawn:'s_og_baby_yawn',ogLifaStep:'s_og_lifa_step',ogLifaKick:'s_og_lifa_kick',ogLifaBlock:'s_og_lifa_block',ogLifaReady:'s_og_lifa_ready',ogLifaPose:'s_og_lifa_pose',ogLetter:'s_og_letter',ogLetterAdd:'s_og_letter_add',ogDash:'s_og_dash',ogRelease:'s_og_release',ogSpellRise:'s_og_spell_rise',ogSpellSlam:'s_og_spell_slam',ogUnlock:'s_og_unlock'});
+Object.assign(SMP.vol,{ogBabyJab:.35,ogBabyBonus:.5,ogBabyHold:.55,ogBabyPose:.6,ogBabyYawn:.35,ogLifaStep:.18,ogLifaKick:.6,ogLifaBlock:.75,ogLifaReady:.45,ogLifaPose:.6,ogLetter:.3,ogLetterAdd:.4,ogDash:.6,ogRelease:.8,ogSpellRise:.65,ogSpellSlam:.9,ogUnlock:.75});
+Object.assign(SMP.alt,{ogBabyJab:['s_og_baby_jab','s_og_baby_jab_2','s_og_baby_jab_3'],ogBabyHold:['s_og_baby_hold','s_og_baby_hold_2'],ogLetterAdd:['s_og_letter_add','s_og_letter_add_2'],ogSpellRise:['s_og_spell_rise','s_og_spell_rise_2'],ogLifaBlock:['s_og_lifa_block','s_og_hmph']});
+for(const k of Object.keys(SMP.map))if(k.startsWith('og')&&!SND[k])SND[k]=(ac,d,t,v)=>{};
+const OGSS={st:'',lifaRun:0,stepT:0,yawnT:8,readyWas:0,lastN:0,spellWas:-9,hurtWas:0};
+function ogSmpStep(){const live=scene==='play'&&!paused&&typeof OG_ON==='function'&&OG_ON();
+  shLoop('s_og_charge',live&&(P.st==='hvc'||P.st==='hvcl'||(P.st&&String(playAnim()[0]).startsWith('og_hcharge'))),.45);
+  if(!live){OGSS.st=P.st;return;}const L=OG.lifa;
+  if(P.st!==OGSS.st){if(P.st==='dash')sfx('ogDash');if(P.st==='hvr')sfx('ogRelease');if(P.st==='hurt')sfx('ogBabyHold');}
+  OGSS.st=P.st;
+  if(L.st==='run'&&G-L.kt>.42){OGSS.stepT-=DT;if(OGSS.stepT<=0){OGSS.stepT=.24;sfx('ogLifaStep');}}
+  if(L.kt>0&&L.kt!==OGSS.kt){OGSS.kt=L.kt;sfx('ogLifaKick');}
+  if(L.bt>0&&L.bt!==OGSS.bt){OGSS.bt=L.bt;sfx('ogLifaBlock');}
+  const ready=L.cd<=0;if(ready&&!OGSS.readyWas&&OGSS.bt)sfx('ogLifaReady');OGSS.readyWas=ready;
+  if(OG.spell!==OGSS.spellWas&&OG.spell>0){OGSS.spellWas=OG.spell;sfx('ogSpellRise');setTimeout(()=>sfx('ogSpellSlam'),600);setTimeout(()=>{sfx('ogBabyPose');sfx('ogLifaPose');},900);}
+  const n=Math.floor(OG.n);if(n>OGSS.lastN)sfx('ogLetterAdd');OGSS.lastN=n;
+  if(P.st==='idle'){OGSS.yawnT-=DT;if(OGSS.yawnT<=0){OGSS.yawnT=10+Math.random()*8;sfx('ogBabyYawn');}}else OGSS.yawnT=Math.max(OGSS.yawnT,6);}
+{const _dh=drawHeavyFX;drawHeavyFX=function(x,y){try{ogSmpStep();}catch(e){}_dh(x,y);};}
+{const _ho=hitOrb;hitOrb=function(o,w){const on=typeof OG_ON==='function'&&OG_ON()&&!OG.inner&&o;const h0=OG.hits;const r=_ho(o,w);if(on){sfx('ogLetter');sfx(OG.hits!==h0&&OG.hits%((typeof skHas==='function'&&skHas('s',1))?2:3)===0?'ogBabyBonus':'ogBabyJab');}return r;};}
+{const _u=ogUnlockDraw;ogUnlockDraw=function(){if(OG.unlockT!=null&&OG.unlockT!==OGSS.ut){OGSS.ut=OG.unlockT;sfx('ogUnlock');}return _u();};}
+if(typeof SMP!=="undefined"&&SMP.go){SMP.go=0;smpLoad();}
+/*OGSNDEND*/
 </script>
 <script src="snd.js"></script>
 </body>
