@@ -3388,6 +3388,18 @@ function fsEnd(){const c=MCTX;c.setTransform(1,0,0,1,0,0);if(VOFF<=0)return;cons
   let g=c.createLinearGradient(o-24,0,o,0);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.55)');c.fillStyle=g;c.fillRect(o-24,0,24,H);
   g=c.createLinearGradient(o+320,0,o+344,0);g.addColorStop(0,'rgba(0,0,0,.55)');g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.fillRect(o+320,0,24,H);c.restore();c.imageSmoothingEnabled=false;}
 fitView();
+
+// ================= iPHONE SOUND: Web Audio is muted by the ring/silent switch (and in Home Screen apps) unless the page asks for
+//   'playback' audio like a video. Also wakes the audio back up after switching apps or a phone call ('interrupted'). =================
+const STTA={el:null};
+try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch(e){}
+function sttAudioWake(){try{if(navigator.audioSession&&navigator.audioSession.type!=='playback')navigator.audioSession.type='playback';}catch(e){}
+  try{if(SFX.ac&&SFX.ac.state!=='running')SFX.ac.resume();}catch(e){}
+  if(navigator.audioSession)return;
+  if(!STTA.el){try{const a=document.createElement('audio');a.src='data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==';a.loop=true;a.setAttribute('playsinline','');a.setAttribute('x-webkit-airplay','deny');a.volume=0.01;STTA.el=a;}catch(e){}}
+  try{if(STTA.el&&STTA.el.paused){const p=STTA.el.play();if(p&&p.catch)p.catch(()=>{});}}catch(e){}}
+['pointerdown','touchend','keydown'].forEach(e=>addEventListener(e,sttAudioWake,{passive:true}));
+document.addEventListener('visibilitychange',()=>{if(document.hidden){try{STTA.el&&STTA.el.pause();}catch(e){}}else setTimeout(()=>{try{if(SFX.ac&&SFX.ac.state!=='running')SFX.ac.resume();}catch(e){}},100);});
 /*ACT2JS*/
 // ================= ACT 2 MAP: the wall of screens.  + the channel-change animation that plays whenever you switch acts =================
 const act2Open=()=>{try{return localStorage.getItem('stt_act2')==='1';}catch(e){return false;}};
