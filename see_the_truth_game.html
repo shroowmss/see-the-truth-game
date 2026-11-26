@@ -1563,7 +1563,7 @@ function fcPrism(x,y,n,sp){for(let i=0;i<n;i++){const a=fcR()*6.28,v=sp*(.4+fcR(
 const FCGC={};
 function fcGhostImg(j){if(FCGC[j])return FCGC[j];const S=FCS,c=document.createElement('canvas');c.width=S.CW;c.height=S.CH;const g=c.getContext('2d');
   g.drawImage(IMG.fcs,(j%S.COLS)*S.CW,Math.floor(j/S.COLS)*S.CH,S.CW,S.CH,0,0,S.CW,S.CH);g.globalCompositeOperation='source-atop';g.fillStyle='#7fd6ff';g.fillRect(0,0,S.CW,S.CH);
-  g.fillStyle='rgba(255,255,255,.55)';for(let y=-S.CW;y<S.CH;y+=6)g.fillRect(0,y,S.CW,1),g.fillRect(0,y+Math.round(S.CW*.5),S.CW,1);return FCGC[j]=c;}
+  return FCGC[j]=c;}
 function fc2Slash(mv,d){const x=P.x,y=P.y;let A=null;
   if(mv==='jab')A={cx:x+d*10,cy:y-26,r:16,a0:-.35,a1:.35,n:6,s:1,L:.2};
   else if(mv==='cross')A={cx:x+d*10,cy:y-26,r:20,a0:-.55,a1:.45,n:8,s:1,L:.24};
@@ -1582,7 +1582,7 @@ function fc2Step(dt){if(G-FC2.last>.5){FCX2.length=0;FCG.length=0;}FC2.last=G;co
   else FC2.mv='';
   // afterimages on dashes, the dash strike, cross-ups and the dive
   const fast=s==='dash'||(s==='atk'&&P.mv==='dash')||P.xdash||s==='adive'||(s==='atk'&&P.mv==='spin');
-  FC2.gh-=dt;if(fast&&FC2.lastJ&&FC2.gh<=0){FC2.gh=.035;FCG.push(Object.assign({t:0,L:.22},FC2.lastJ));if(FCG.length>10)FCG.shift();}
+  FC2.gh-=dt;if(fast&&FC2.lastJ&&FC2.gh<=0){FC2.gh=.06;FCG.push(Object.assign({t:0,L:.16},FC2.lastJ));if(FCG.length>4)FCG.shift();}
   for(const g of FCG)g.t+=dt;for(let i=FCG.length-1;i>=0;i--)if(FCG[i].t>=FCG[i].L)FCG.splice(i,1);
   // full-charge heavy: a giant diamond forms in front of the fist and shatters
   if(s==='hvr'&&P.hvBoom&&!FC2.hb&&(P.hcharge||0)>=.95)fc2Add({k:'gd',x:P.x+d*30,y:P.y-26,L:.34,d});
@@ -1595,7 +1595,7 @@ function fc2Step(dt){if(G-FC2.last>.5){FCX2.length=0;FCG.length=0;}FC2.last=G;co
     if(p.k==='sl'&&!p.sp&&p.t>p.L*.5){p.sp=1;const e=p.a1;fcShards(p.cx+Math.cos(e)*p.r*p.d,p.cy+Math.sin(e)*p.r*(p.fy||1),p.s>1?3:2,50,p.d,20);}}
   for(let i=FCX2.length-1;i>=0;i--)if(FCX2[i].t>=FCX2[i].L)FCX2.splice(i,1);}
 function fc2DrawBack(){const cx=camX,cy=camY,S=FCS;
-  for(const g of FCG){if(!IMG.fcs.complete)break;const u=g.t/g.L;ctx.save();ctx.globalAlpha=.5*(1-u);ctx.translate(Math.round(g.x-cx),Math.round(g.y-cy));if(g.S!==1)ctx.scale(g.S,g.S);if(g.flip)ctx.scale(-1,1);
+  for(const g of FCG){if(!IMG.fcs.complete)break;const u=g.t/g.L;ctx.save();ctx.globalAlpha=.26*(1-u);ctx.translate(Math.round(g.x-cx),Math.round(g.y-cy));if(g.S!==1)ctx.scale(g.S,g.S);if(g.flip)ctx.scale(-1,1);
     ctx.drawImage(fcGhostImg(g.j),-S.AX+((typeof FCDXJ!=='undefined'&&FCDXJ[g.j])||0),-S.AY);ctx.restore();}
   ctx.globalAlpha=1;}
 function fc2DrawFront(){const cx=camX,cy=camY;
@@ -1626,6 +1626,11 @@ function fc2DrawFront(){const cx=camX,cy=camY;
   const a=G*1.6;if(Math.floor(G*5)%7===0){const gx=Math.round(x+Math.cos(a)*15*Z),gy=Math.round(y-30*Z+Math.sin(a)*7*Z);ctx.globalAlpha=1;px(gx-4,gy,9,1,'rgba(255,255,255,.8)');px(gx,gy-4,1,9,'rgba(255,255,255,.8)');}
   ctx.globalAlpha=1;};}
 
+
+// FC movement: use the clean full-size walk/sprint/jump frames from the shirt atlas (the downscaled 6000-range sheet drew Onyx smaller and blurry)
+{const pick=(a,n)=>Array.from({length:n},(_,i)=>4000+a[Math.min(a.length-1,Math.floor(i*a.length/n))]);
+ ANIM.fc_mwalk={f:pick(FCR.walk,15),fps:1};ANIM.fc_msprint={f:pick(FCR.sprint,15),fps:1};
+ const J=FCR.jump;ANIM.fc_mjump={f:[0,1,2,3,4,5,5,6,7,8,9,10,11,12,13].map(i=>4000+J[i]),fps:1};}
 /*SHDBEND*/
 
 
