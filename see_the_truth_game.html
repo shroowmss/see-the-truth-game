@@ -230,7 +230,7 @@ function choose(){if(sel===0){if(hasProgress()){if(G-wipeT>4){wipeT=G;return;}if
 function confirm(){if(trans||ACTSW)return;
   if(scene==='title'){if(!menuOpen){if(G-s0>2.8)menuOpen=true;else s0=G-2.8;}else choose();}
   else if(paused){if(pview==='controls'){pview=SETV.ret||'menu';SETV.ret='menu';}else if(pview==='settings')setChoose();else if(pview==='music')muPlayAt(MU.sel);else if(pview==='shirts')shWearSel();else pauseChoose();}
-  else if(scene==='act')go(afterAct);else if(scene==='controls')go('cutscene');else if(scene==='cutscene')csNext();else if(scene==='select')selectChoose();else if(scene==='guide')guideChoose();else if(scene==='deadair')daChoose();else if(scene==='rerun')rrChoose();else if(scene==='chill')chillConfirm();else if(scene==='void')voidConfirm();else if(scene==='play'&&(won||OVER))endKey('Enter');}
+  else if(scene==='act')go(afterAct);else if(scene==='controls')go('cutscene');else if(scene==='cutscene')csNext();else if(scene==='select')selectChoose();else if(scene==='guide')guideChoose();else if(scene==='deadair')daChoose();else if(scene==='rerun')rrChoose();else if(scene==='mall')mallChoose();else if(scene==='chill')chillConfirm();else if(scene==='void')voidConfirm();else if(scene==='play'&&(won||OVER))endKey('Enter');}
 
 // ================= TITLE / MENU =================
 function drawTitleSceneOld(){
@@ -1138,7 +1138,7 @@ const SHDB={diamond:{img:'shirt',fs:52,short:'FOREVER',sp:'DIAMOND',where:['THE 
   onyx:{img:'shirt2',fs:64,short:'AFTER DARK',sp:'SIGHT+DASH',where:['THE EYE','END OF ACT 1'],pw:[
     {n:'TRUE SIGHT',k:['HOLD E','HOLD [R3]','TAP THE EYE'],d:'SEE WHAT IS REAL: HIDDEN CASH SHOWS UP AND FAKE EYES FADE AWAY.'},
     {n:'SHADOW DASH',k:['A','[B]','DASH'],d:'WHILE DASHING YOU TURN TO SHADOW. ENEMIES AND BOLTS PASS RIGHT THROUGH YOU.'}]},
-  garments:{img:'shirt3',fs:64,short:'GARMENTS',sp:'THE CREW',where:['THE STATIC KING','END OF DEAD AIR'],pw:[
+  garments:{img:'shirt3',fs:64,short:'THE CREW',sp:'BABY ONYX+LIFA',where:['THE STATIC KING','END OF DEAD AIR'],pw:[
     {n:'THE CREW',k:['','',''],d:'BABY ONYX PUNCHES WITH YOU. LIFA KICKS ON YOUR FINISHER AND BLOCKS ONE HIT.'},
     {n:'SPELL IT OUT',k:['12 HITS','12 HITS','12 HITS'],d:'EVERY HIT ADDS A LETTER. SPELL THE NAME TO HIT EVERY ENEMY ON SCREEN.'}]}};
 const SHV={sel:0,t0:0};
@@ -3186,11 +3186,85 @@ function rrmFront(VW,VH){const R=RRM;if(R.st==='end'){if(R.endT>6.5){const a=Mat
   if(rrPages()<15){T('POWER '+Math.round((.45+.85*rrPages()/15)*100)+'%',bx+bw,by-2,8,'#8a7a9a','right','#000');}}
 /*RRMEND*/
 
+
+
+
+
+/*MALL*/
+// ================= CHANNEL 4: LATE NIGHT SHOPPING. A mega-mall that is also a 3AM home-shopping show: everything is on sale forever,
+//   the host's voice never stops over the PA. The level select is the mall directory board ("YOU ARE HERE"). =================
+[['4-1','CH 04-1','GRAND OPENING'],['4-2','CH 04-2','THE FOOD COURT'],['4-3','CH 04-3','THE STOCKROOM'],['4-B','CH 04-FINALE','THE HOST']].forEach(([id,label,name])=>LVX[id]={id,label,name,ln:1});
+setTimeout(()=>{try{GUIDE[3].open=1;GUIDE[3].sub='CHANNEL 4';}catch(e){}},0);
+const MALL={sel:1,s0:-1,ret:1,n:0,msg:'',msgT:-9,tick:0};
+function mallLoad(){try{MALL.n=Math.max(0,Math.min(4,+localStorage.getItem('stt_ln_n')||0));}catch(e){}}
+mallLoad();
+// stops: 0 exit, 1-3 levels, 4 boss. Each is a zone on the floor plan.
+const MALL_Z=[
+ {id:'exit',name:'EXIT',sub:'BACK TO THE WALL',x:26,y:150,w:38,h:36,col:'#3a3a48',ic:'exit'},
+ {id:'4-1',name:'GRAND OPENING',sub:'LEVEL 1  -  ATRIUM',x:74,y:118,w:78,h:68,col:'#e0457a',ic:'fountain'},
+ {id:'4-2',name:'THE FOOD COURT',sub:'LEVEL 2  -  FOOD COURT',x:160,y:118,w:70,h:68,col:'#f0a030',ic:'food'},
+ {id:'4-3',name:'THE STOCKROOM',sub:'LEVEL 3  -  STAFF ONLY',x:238,y:118,w:58,h:68,col:'#3aa6a0',ic:'box'},
+ {id:'4-B',name:'THE HOST',sub:'FINALE  -  CENTER STAGE',x:110,y:50,w:100,h:52,col:'#9b5cff',ic:'stage'}];
+const mallOpen=k=>k===0||k<=MALL.n+1;
+const mallBuilt=id=>!!LEVEL_DATA[id];
+const MALL_ADS=['ALL SALES FINAL. ALL SALES FOREVER.','CALL NOW! OPERATORS ARE ALWAYS STANDING BY.','THE MALL NEVER CLOSES. NEITHER DO YOU.','BUY ONE, GET ONE... WATCHING YOU.','LIMITED TIME OFFER: EVERY TIME.','YOU DON\'T NEED IT. YOU NEED IT.'];
+function mallKey(code){if(ACTSW)return;const o=MALL.sel;
+  if(code==='ArrowRight'||code==='KeyD')MALL.sel=MALL.sel===4?3:Math.min(3,MALL.sel+1);
+  if(code==='ArrowLeft'||code==='KeyA')MALL.sel=MALL.sel===4?1:Math.max(0,MALL.sel-1);
+  if(code==='ArrowUp'||code==='KeyW')MALL.sel=4;
+  if(code==='ArrowDown'||code==='KeyS')if(MALL.sel===4)MALL.sel=2;
+  if(o!==MALL.sel)try{sfx('tick');}catch(e){}
+  if(code==='Escape'||code==='Backspace'||code==='KeyC')actSwitch('guide');}
+function mallChoose(){if(ACTSW||trans)return;const z=MALL_Z[MALL.sel];if(z.id==='exit'){actSwitch('guide');return;}
+  if(!mallOpen(MALL.sel)){MALL.msg='SHUTTERS DOWN';MALL.msgT=G;rumble(.2,.2,80);return;}
+  if(!mallBuilt(z.id)){MALL.msg='OPENING SOON';MALL.msgT=G;try{sfx('tick');}catch(e){}return;}
+  PLAYLV=z.id;MALL.ret=MALL.sel;go('play');}
+function mallTap(x,y){for(let i=0;i<MALL_Z.length;i++){const z=MALL_Z[i];if(x>=z.x&&x<z.x+z.w&&y>=z.y&&y<z.y+z.h){if(MALL.sel===i)mallChoose();else{MALL.sel=i;try{sfx('tick');}catch(e){}}return;}}}
+function mallIcon(k,cx,cy,c){const t=G;
+  if(k==='fountain'){px(cx-8,cy+2,16,4,c);px(cx-5,cy-2,10,4,'#ffd0e0');for(let i=0;i<3;i++){const h=4+Math.round(Math.abs(Math.sin(t*3+i))*4);px(cx-4+i*4,cy-2-h,1,h,'#bfe8ff');}}
+  else if(k==='food'){px(cx-7,cy-2,14,8,c);px(cx-7,cy-4,14,2,'#fff4dc');px(cx-3,cy-9,2,5,'#c0c0c0');px(cx+2,cy-9,2,5,'#c0c0c0');}
+  else if(k==='box'){px(cx-7,cy-5,14,11,'#b08050');px(cx-7,cy-5,14,1,'#e0b080');px(cx-1,cy-5,2,11,'#e8d0a0');}
+  else if(k==='stage'){px(cx-14,cy+2,28,4,'#5a3a9a');for(let i=0;i<3;i++){const on=Math.floor(t*4+i)%2;px(cx-10+i*10,cy-8,3,3,on?'#fff4a0':'#806a20');}px(cx-2,cy-4,4,6,c);}
+  else if(k==='exit'){px(cx-5,cy-6,10,12,'#1a1a24');px(cx-4,cy-5,8,11,'#2a6a3a');px(cx+1,cy,2,1,'#e0e0e0');}}
+function drawMall(){const t=G;if(MALL.s0!==s0){MALL.s0=s0;mallLoad();MALL.sel=MALL.ret||1;MALL.msgT=-9;}
+  // the directory board: a lit backlit panel in a dark mall at 3AM
+  px(0,0,W,H,'#0a0814');ctx.globalCompositeOperation='lighter';let g=ctx.createRadialGradient(W/2,110,20,W/2,110,220);g.addColorStop(0,'rgba(120,90,200,.18)');g.addColorStop(1,'rgba(120,90,200,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.globalCompositeOperation='source-over';
+  px(12,22,W-24,176,'#1a1828');px(14,24,W-28,172,'#efe8d8');px(14,24,W-28,1,'#ffffff');
+  // header bar
+  px(14,24,W-28,16,'#2a2240');T('MALL DIRECTORY',22,35,8,'#ffe6a8','left');
+  {const h=new Date(),ap='AM';T('3:'+String(Math.floor(t)%60).padStart(2,'0')+' '+ap,W-22,35,8,'#ff5e8a','right');}
+  // corridors (the walkway between zones)
+  px(20,108,W-40,8,'#cfc6b0');px(66,116,8,74,'#cfc6b0');px(152,116,8,74,'#cfc6b0');px(230,116,8,74,'#cfc6b0');px(156,100,8,10,'#cfc6b0');
+  // escalator icon between floors
+  for(let i=0;i<4;i++)px(92+i*3,104-i*3,3,2,'#8a8270');
+  // zones
+  MALL_Z.forEach((z,i)=>{const open=mallOpen(i),built=mallBuilt(z.id),sel=MALL.sel===i,cleared=i>0&&i<=MALL.n;
+    px(z.x-1,z.y-1,z.w+2,z.h+2,sel?'#1a1020':'#9a927e');px(z.x,z.y,z.w,z.h,open?z.col:'#b8b0a0');
+    if(!open||(!built&&i>0)){for(let yy=z.y+2;yy<z.y+z.h;yy+=4)px(z.x+1,yy,z.w-2,2,open?'rgba(255,255,255,.18)':'#a49c8c');}
+    mallIcon(z.ic,z.x+z.w/2,z.y+z.h/2-4,open?'#ffffff':'#8a8270');
+    T(String(i===0?'':i===4?'B':i),z.x+5,z.y+11,8,open?'#ffffff':'#7a7262','left');
+    if(cleared){px(z.x+z.w-10,z.y+3,7,7,'#2a8a3a');px(z.x+z.w-8,z.y+6,1,2,'#fff');px(z.x+z.w-7,z.y+7,1,1,'#fff');px(z.x+z.w-6,z.y+4,1,3,'#fff');}
+    if(sel){const b=Math.floor(t*3)%2;ctx.strokeStyle=b?'#ff2050':'#ffd0d8';ctx.lineWidth=2;ctx.strokeRect(z.x-2.5,z.y-2.5,z.w+5,z.h+5);ctx.lineWidth=1;}});
+  // YOU ARE HERE: a red dot by the selected zone
+  {const z=MALL_Z[MALL.sel],x=z.x+z.w/2,y=z.y+z.h-10,p=Math.sin(t*6)*1.5;ctx.globalCompositeOperation='lighter';const gg=ctx.createRadialGradient(x,y,1,x,y,10);gg.addColorStop(0,'rgba(255,40,60,.7)');gg.addColorStop(1,'rgba(255,40,60,0)');ctx.fillStyle=gg;ctx.fillRect(x-10,y-10,20,20);ctx.globalCompositeOperation='source-over';
+    px(Math.round(x-2-p/2),Math.round(y-2-p/2),Math.round(4+p),Math.round(4+p),'#e01030');px(x-1,y-1,1,1,'#ffb0b8');}
+  // legend panel
+  {const z=MALL_Z[MALL.sel],open=mallOpen(MALL.sel),built=mallBuilt(z.id);px(14,160-0,1,1,'rgba(0,0,0,0)');
+    px(W-108,46,94,58,'#2a2240');px(W-108,46,94,1,'#ffe6a8');T('YOU ARE HERE',W-61,57,8,'#ff5e8a','center');
+    T(z.name,W-61,72,8,'#ffffff','center');T(z.sub.split('  -  ')[0],W-61,84,8,'#bfb4e0','center');
+    const st=z.id==='exit'?'ENTER: LEAVE':!open?'SHUTTERS DOWN':!built?'OPENING SOON':MALL.sel<=MALL.n?'VISITED':'ENTER: SHOP';T(st,W-61,97,8,!open?'#8a8270':!built?'#ffb050':'#9dffa0','center');}
+  // the infomercial ticker along the bottom
+  {px(0,H-20,W,20,'#1a0a14');px(0,H-20,W,1,'#ff2050');px(4,H-17,40,14,'#ff2050');T('LIVE',24,H-6,8,'#ffffff','center');
+    const msg=MALL_ADS.join('   *   ')+'   *   ';ctx.save();ctx.beginPath();ctx.rect(48,H-18,W-48,18);ctx.clip();const tw=TW(msg),off=(t*40)%tw;T(msg,48-off,H-6,8,'#ffe6a8','left');T(msg,48-off+tw,H-6,8,'#ffe6a8','left');ctx.restore();}
+  if(G-MALL.msgT<1.5){const w=TW(MALL.msg)+14;px(W/2-w/2,90,w,16,'#1a1020');px(W/2-w/2,90,w,1,'#ff5e8a');T(MALL.msg,W/2,101,8,'#ffffff','center');}
+  for(let y=0;y<H;y+=3)px(0,y,W,1,'rgba(0,0,0,.06)');}
+/*MALLEND*/
+
 /*ACT2JS*/
 // ================= ACT 2 MAP: the wall of screens.  + the channel-change animation that plays whenever you switch acts =================
 const act2Open=()=>{try{return localStorage.getItem('stt_act2')==='1';}catch(e){return false;}};
 let ACTSW=null;
-function actSwitch(to){if(trans||ACTSW)return;ACTSW={t:0,to,ch:to==='select'?1:2,sw:0,lab:to==='select'?'THE CITY':to==='deadair'?'DEAD AIR':to==='rerun'?'THE RERUN':'THE BROADCAST'};rumble(.3,.5,150);}
+function actSwitch(to){if(trans||ACTSW)return;ACTSW={t:0,to,ch:to==='select'?1:2,sw:0,lab:to==='select'?'THE CITY':to==='deadair'?'DEAD AIR':to==='rerun'?'THE RERUN':to==='mall'?'LATE NIGHT SHOPPING':'THE BROADCAST'};rumble(.3,.5,150);}
 function actSwDraw(dt){const a=ACTSW;a.t+=dt;const t=a.t;
   if(t<.22){const k=t/.22,hh=Math.round(112*k*k);px(0,0,W,hh,'#000');px(0,H-hh,W,hh,'#000');px(0,hh-1,W,1,'#fff');px(0,H-hh,W,1,'#fff');}
   else if(t<.34){const k=(t-.22)/.12;px(0,0,W,H,'#000');px(CX-(1-k)*CX,111,(1-k)*W,2,'#fff');}
@@ -3281,7 +3355,7 @@ function drawGuide(){const dt=DT,t=G,ts=G-s0,FY=190;
   // Onyx
   let sc=1,oy=FY,an='idle';
   if(WL.j){const j=WL.j;j.t+=dt;const [x,y,w,h]=wlTV(j.i),tx=x+w/2,ty=y+h-6,k=Math.min(1,j.t/.32),open=GUIDE[j.i].open;
-    if(j.t<.32||open){WL.x+=(tx-WL.x)*Math.min(1,dt*12);oy=FY-(FY-ty)*k;sc=1-.6*k;an='rise';if(open&&j.t>.34&&!j.done){j.done=1;actSwitch(GUIDE[j.i].id==='home'?'select':GUIDE[j.i].ch===3?'rerun':'deadair');}if(open&&j.t>.34)sc=0;}
+    if(j.t<.32||open){WL.x+=(tx-WL.x)*Math.min(1,dt*12);oy=FY-(FY-ty)*k;sc=1-.6*k;an='rise';if(open&&j.t>.34&&!j.done){j.done=1;actSwitch(GUIDE[j.i].id==='home'?'select':GUIDE[j.i].ch===3?'rerun':GUIDE[j.i].ch===4?'mall':'deadair');}if(open&&j.t>.34)sc=0;}
     else{const k2=Math.min(1,(j.t-.32)/.3);oy=ty+(FY-ty)*k2*k2;sc=.4+.6*k2;an='rise';if(!j.done){j.done=1;shakeT=.2;rumble(.6,.6,150);WL.msg='NO SIGNAL ON CH 0'+GUIDE[j.i].ch+'  -  COMING SOON';WL.msgT=G;}if(j.t>.66)WL.j=null;}
     if(open&&j.t>1.6)WL.j=null;}
   else if(!ACTSW&&!trans&&!paused&&!WL.ui){let mv=(keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0);if(mv)WL.goM=0;else if(WL.goM){if(Math.abs(WLMX-42-WL.x)<3){WL.goM=0;wlShopOpen();}else mv=WLMX-42>WL.x?1:-1;}
@@ -3463,12 +3537,12 @@ function drawWin(dt){const w=WIN;w.t+=dt;const t=w.t,a=Math.min(1,t/.4),n=w.rows
     T('RANK',254,88,8,'#d9d3f0','center');T(w.rank,257,126,32,'#12042c','center');T(w.rank,255,124,32,rt<.12?'#ffffff':col,'center');
     if(rt<.35){ctx.globalAlpha=1-rt/.35;const R=Math.round(rt*90);px(254-R,104,R*2,1,col);px(254,104-R,1,R*2,col);ctx.globalAlpha=1;}
     if(w.best&&rt>.4&&Math.floor(G*3)%2)T('NEW BEST!',254,144,8,'#ffe66d','center');}
-  if(t>=w.end-.4){T(CUR==='1-2'?'NEXT: BRING LIFA THE LIGHTER':CUR==='1-3'?'THE EYE IS ON EVERY SCREEN...':CUR==='eye'?'THE EYE FLED INTO THE BROADCAST...':'TO BE CONTINUED...',CX,166,8,'#ffe66d','center');}if(CUR==='2-B'&&t>=w.end-.4&&typeof SHIRTS!=='undefined'&&SHIRTS.garments){T('NEW SHIRT UNLOCKED: ONYX GARMENTS',CX,180,8,'#ff3d8b','center','#000');}if(t>=w.end-.4&&typeof STKS!=='undefined'&&STKS.earned){T('+'+STKS.earned+' THREADS  ('+STKNAME[skShirt()]+')',CX,194,8,STKCOL[skShirt()],'center','#000');}
+  if(t>=w.end-.4){T(CUR==='1-2'?'NEXT: BRING LIFA THE LIGHTER':CUR==='1-3'?'THE EYE IS ON EVERY SCREEN...':CUR==='eye'?'THE EYE FLED INTO THE BROADCAST...':'TO BE CONTINUED...',CX,166,8,'#ffe66d','center');}if(CUR==='2-B'&&t>=w.end-.4&&typeof SHIRTS!=='undefined'&&SHIRTS.garments){T('NEW SHIRT UNLOCKED: THE CREW',CX,180,8,'#ff3d8b','center','#000');}if(t>=w.end-.4&&typeof STKS!=='undefined'&&STKS.earned){T('+'+STKS.earned+' THREADS  ('+STKNAME[skShirt()]+')',CX,194,8,STKCOL[skShirt()],'center','#000');}
   if(t>=w.end){endBtn('CONTINUE',CX-98,176,92,w.sel===0);endBtn('REPLAY',CX+6,176,92,w.sel===1);
     const p=PR('LEFT/RIGHT  CHOOSE     ENTER  SELECT','[A] SELECT','');if(p)TP(p,CX,204,8,'#6a5a98','center');}}
 function endPick(i){for(const k in hit)delete hit[k];
-  if(OVER){if(i===0){resetPlay();s0=G;if(CUR==='eye'&&EYEKP){cash=EYEKP[0];RUN.t=EYEKP[1];RUN.hits=EYEKP[2];RUN.kos=EYEKP[3];}}else go(LVX[CUR]?(LVX[CUR].rr?'rerun':'deadair'):'select');}
-  else if(WIN){if(i===0)go(LVX[CUR]?(LVX[CUR].rr?'rerun':'deadair'):'select');else{resetPlay();s0=G;}}}
+  if(OVER){if(i===0){resetPlay();s0=G;if(CUR==='eye'&&EYEKP){cash=EYEKP[0];RUN.t=EYEKP[1];RUN.hits=EYEKP[2];RUN.kos=EYEKP[3];}}else go(LVX[CUR]?(LVX[CUR].rr?'rerun':LVX[CUR].ln?'mall':'deadair'):'select');}
+  else if(WIN){if(i===0)go(LVX[CUR]?(LVX[CUR].rr?'rerun':LVX[CUR].ln?'mall':'deadair'):'select');else{resetPlay();s0=G;}}}
 function endKey(code){const ok=code==='Enter'||code==='Space'||code==='KeyZ';
   if(OVER){const o=OVER;if(o.t<(o.rdy||1.9)){if(ok&&o.t>.5)o.t=(o.rdy||1.9);return;}if(code==='ArrowUp'||code==='ArrowDown')o.sel^=1;else if(ok)endPick(o.sel);}
   else if(WIN){const w=WIN;if(w.t<w.end){if(ok&&w.t>.4)w.t=w.end;return;}if(code==='ArrowLeft'||code==='ArrowRight')w.sel^=1;else if(ok)endPick(w.sel);}}
@@ -4660,7 +4734,7 @@ function prr(x,y,w,h,r,c){x=Math.round(x);y=Math.round(y);r=Math.max(0,Math.min(
 
 function pauseChoose(){const c=PMENU[psel];
   if(c==='RESUME')setPause(false);else if(c==='RESTART ACT')go('play');else if(c==='SETTINGS'){pview='settings';SETV.sel=0;}else if(c==='SHIRTS')shOpen();else if(c==='MUSIC'){pview='music';muOpenList();}
-  else if(c==='LEVEL SELECT')go(LVX[CUR]?(LVX[CUR].rr?'rerun':'deadair'):'select');else{go('title');}}
+  else if(c==='LEVEL SELECT')go(LVX[CUR]?(LVX[CUR].rr?'rerun':LVX[CUR].ln?'mall':'deadair'):'select');else{go('title');}}
 // ================= BACK BUTTON (every menu screen; Esc / Backspace does the same) =================
 function backTarget(){if(trans)return null;if(paused)return 'pause';if(scene==='title')return menuOpen?'menu':null;
   if(scene==='chill')return CH.ev?null:'chill';
@@ -5311,7 +5385,7 @@ const MBTN={w:56,play:W-118,back:W-60};
 let last=0;
 function frame(now){
   const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;DT=dt;G+=dt;CAMX=0;EOY=0;EALPHA=1;pollPad();document.body.classList.toggle('paused',!!paused&&scene==='play');
-  if(scene==='title')drawTitleScene();else if(scene==='act')drawAct();else if(scene==='controls')drawControls();else if(scene==='cutscene')drawCut(dt);else if(scene==='select')drawSelect();else if(scene==='guide')drawGuide();else if(scene==='deadair')drawDA();else if(scene==='rerun')drawRRS();else if(scene==='chill')drawChill(dt);else if(scene==='void')drawVoid(dt);else if(paused)drawPause();else drawPlay(dt);
+  if(scene==='title')drawTitleScene();else if(scene==='act')drawAct();else if(scene==='controls')drawControls();else if(scene==='cutscene')drawCut(dt);else if(scene==='select')drawSelect();else if(scene==='guide')drawGuide();else if(scene==='deadair')drawDA();else if(scene==='rerun')drawRRS();else if(scene==='mall')drawMall();else if(scene==='chill')drawChill(dt);else if(scene==='void')drawVoid(dt);else if(paused)drawPause();else drawPlay(dt);
   drawBackBtn();drawPadToast();muToast();
   if(scene==='title'&&menuOpen&&G-wipeT<4&&!trans){const w=TW('PRESS ENTER AGAIN TO START OVER')+24,b=Math.floor(G*4)%2;px(CX-w/2,104,w,24,'rgba(10,4,32,.95)');px(CX-w/2,104,w,1,'#ff4d6d');px(CX-w/2,127,w,1,'#ff4d6d');T('THIS ERASES ALL PROGRESS',CX,114,8,'#ff8aa0','center');T(PR('PRESS ENTER AGAIN TO START OVER','PRESS A AGAIN TO START OVER','TAP NEW GAME AGAIN'),CX,124,8,b?'#ffffff':'#d9d3f0','center');}
   if(trans){trans.t+=dt;if(!trans.sw&&trans.t>=.4){trans.sw=1;scene=trans.to;enterScene(scene);}const a=trans.t<.4?trans.t/.4:Math.max(0,1-(trans.t-.4)/.4);
@@ -5337,7 +5411,7 @@ function keyDown(code){if(!keys[code])hit[code]=1;keys[code]=1;
   if(paused&&pview==='menu'&&!trans){if(code==='ArrowUp')psel=(psel+PMENU.length-1)%PMENU.length;if(code==='ArrowDown')psel=(psel+1)%PMENU.length;if(code==='ArrowRight')muSkip(1);if(code==='ArrowLeft')muSkip(-1);}
   if(ACTSW)return;
   if(scene==='guide'&&!trans){guideKey(code);return;}
-  if(scene==='rerun'&&!trans&&code!=='Enter'){rrKey(code);return;}if(scene==='deadair'&&!trans&&code!=='Enter'){daKey(code);return;}
+  if(scene==='mall'&&!trans&&code!=='Enter'){mallKey(code);return;}if(scene==='rerun'&&!trans&&code!=='Enter'){rrKey(code);return;}if(scene==='deadair'&&!trans&&code!=='Enter'){daKey(code);return;}
   if(scene==='select'&&!trans&&!SUB.open&&code==='KeyC'&&act2Open()){actSwitch('guide');return;}
   if(scene==='select'&&!trans&&SUB.open){if(!SUB.ride){if(code==='ArrowUp')SUB.sel=(SUB.sel+2)%3;if(code==='ArrowDown')SUB.sel=(SUB.sel+1)%3;if(code==='Escape'||code==='Backspace')SUB.open=0;}return;}
   if(scene==='select'&&!trans){const d={ArrowLeft:'L',ArrowRight:'R',ArrowUp:'U',ArrowDown:'D'}[code];if(d)mapGo(d);if(code==='Escape'||code==='Backspace')selectBack();}
@@ -5433,7 +5507,7 @@ cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect(),x=(e.cl
   if(paused&&pview==='settings'){setTap(x,y);return;}
   if(paused&&pview==='training'){trTap(x,y);return;}
   if(paused){if(pview==='controls'){pview=SETV.ret||'menu';SETV.ret='menu';return;}if(y>=PL.py+8&&y<PL.py+34&&x>PL.px+12&&x<PL.px+PL.pw-12){if(x<PL.px+38)muSkip(-1);else if(x>PL.px+PL.pw-38)muSkip(1);else muToggle();return;}const i=Math.floor((y-PL.py-PL.rowY)/PL.rowS);if(x>PL.px&&x<PL.px+PL.pw&&i>=0&&i<PMENU.length&&(y-PL.py-PL.rowY)%PL.rowS<PL.rowH){psel=i;pauseChoose();}return;}
-  if(ACTSW)return;if(scene==='guide'){guideTap(x,y);return;}if(scene==='deadair'){daTap(x,y);return;}if(scene==='rerun'){rrTap(x,y);return;}
+  if(ACTSW)return;if(scene==='guide'){guideTap(x,y);return;}if(scene==='deadair'){daTap(x,y);return;}if(scene==='rerun'){rrTap(x,y);return;}if(scene==='mall'){mallTap(x,y);return;}
   if(scene==='select'&&act2Open()&&!SUB.open&&x>=W-68&&y>=22&&y<40){actSwitch('guide');return;}
   if(scene==='select'){mapTap(x,y);return;}
   if(scene==='chill'){chillTap(x,y);return;}
@@ -5483,7 +5557,7 @@ function pollPad(){const pads=navigator.getGamepads?navigator.getGamepads():[];c
     if(live.some(gp=>gp.buttons.some((q,i)=>i!==16&&(q.pressed||q.value>.5)))||Math.abs(ax)>.45||Math.abs(ay)>.5)INPUT='pad';
     if(scene==='chill'&&b(3))want.add('KeyC');
     if(b(14)||ax<-.45)want.add('ArrowLeft');if(b(15)||ax>.45)want.add('ArrowRight');if(b(12)||ay<-.5)want.add('ArrowUp');if(b(13)||ay>.5)want.add('ArrowDown');
-    if(menu){if((scene==='select'||scene==='guide'||scene==='deadair'||scene==='rerun')&&b(3))want.add('KeyC');if(paused&&pview==='music'&&b(3))want.add('KeyS');if(paused&&pview==='shirts'&&b(3))want.add('KeyB');if(paused&&pview==='shirts'&&b(2))want.add('KeyV');if(b(0))want.add('Enter');if(b(1))want.add('Escape');if(b(9))want.add(scene==='play'?'Escape':'Enter');}
+    if(menu){if((scene==='select'||scene==='guide'||scene==='deadair'||scene==='rerun'||scene==='mall')&&b(3))want.add('KeyC');if(paused&&pview==='music'&&b(3))want.add('KeyS');if(paused&&pview==='shirts'&&b(3))want.add('KeyB');if(paused&&pview==='shirts'&&b(2))want.add('KeyV');if(b(0))want.add('Enter');if(b(1))want.add('Escape');if(b(9))want.add(scene==='play'?'Escape':'Enter');}
     else{if(b(0))want.add('Space');if(b(2))want.add('KeyZ');if(b(1))want.add('KeyA');if(b(3))want.add('KeyC');if(b(4))want.add('KeyV');if(b(6))want.add('KeyX');if(b(5)||b(7))want.add('ShiftLeft');if(b(10))want.add('KeyQ');if(b(11))want.add('KeyE');if(b(9))want.add('Escape');}
     if(b(8))want.add('Escape');}
   for(const k of GP.held)if(!want.has(k))keyUp(k);
@@ -5630,8 +5704,8 @@ TRROWS.splice(5,0,{l:'I-FRAME VIEW',t:'tog',k:'ifv'});
 //      12 letters spell ONYX GARMENTS and the letters slam down on every enemy on screen. Dash = crew swap in a puff of paper. ----
 const OGS={"CW":110,"CH":84,"AX":55,"AY":76,"COLS":16,"rows":{"idle":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],"walk":[16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31],"sprint":[32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48],"combo":[49,50,51,52,53,54,55,56,57,58,59,60,61,62,63],"hcharge":[64,65,66,67,68,69,70,71,72,73,74,75,76,77,78],"hrelease":[79,80,81,82,83,84,85,86,87,88,89,90,91,92,93],"dash":[94,95,96,97,98,99,100,101,102,103,104,105,106,107,108],"spell":[109,110,111,112,113,114,115,116,117,118,119,120,121,122,123],"hurt":[124,125,126,127,128,129,130,131,132,133,134,135,136,137,138]},"HT":[46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,41,41,41,40,40,40,40,40,41,41,40,39,36,36,40,40,39,46,47,47,47,49,47,50,50,48,47,41,42,52,51,46,51,49,46,42,42,41,39,40,42,43,41,42,42,43,43,42,46,43,43,47,47,47,41,44,47,46,46,48,47,48,51,42,38,35,24,7,9,40,30,40,36,40,46,51,54,50,49,52,52,51,50,54,52,46,32,40,45,52,51,51,51,49,52,49,49,45,45,39,39,40,46,47,50,50,51],"HX":[0,2,0,1,0,0,0,0,1,0,0,0,1,0,1,0,0,0,0,2,1,2,0,0,0,1,2,1,1,0,0,1,1,1,0,0,0,0,0,0,1,1,0,-5,0,0,1,0,0,8,7,7,5,3,3,2,1,5,5,3,4,6,5,8,5,2,0,2,7,6,5,4,2,2,3,4,5,2,5,0,3,3,3,1,4,4,0,1,6,7,7,8,8,10,6,1,0,0,2,2,1,1,0,-2,-1,1,2,3,2,4,4,4,6,6,3,0,3,-6,8,0,2,3,5,4,6,4,3,8,8,10,4,4,4,4,2,6,5,5,6]},OGR=OGS.rows,OGC={"CW":48,"CH":44,"AX":24,"AY":40,"COLS":16,"rows":{"lifa_run":[0,1,2,3,4,5,6],"lifa_kick":[7,8,9,10,11,12,13],"lifa_block":[14,15,16,17,18,19,20,21,22],"lifa_pose":[23,24,25,26,27,28,29,30],"baby_sit":[31,32,33,34,35,36,37],"baby_jab":[38,39,40,41,42,43,44],"baby_dive":[45,46,47,48,49,50,51,52],"baby_pose":[53,54,55,56,57,58,59,60]}};
 for(const k in OGR)ANIM['og_'+k]={f:OGR[k].map(j=>7000+j),fps:1};
-SHIRTS.garments={name:'ONYX GARMENTS',power:'THE CREW',col:'#ff3d8b',desc:'baby onyx and lifa fight with you. spell the name to wipe the screen.'};
-try{if(typeof TRMS!=='undefined'&&!TRMS.some(m=>m.id==='garments'))TRMS.push({id:'garments',n:'ONYX GARMENTS',c:'#ff3d8b'});}catch(e){}
+SHIRTS.garments={name:'THE CREW',power:'BABY ONYX + LIFA',col:'#ff3d8b',desc:'baby onyx and lifa fight with you. spell the name to wipe the screen.'};
+try{if(typeof TRMS!=='undefined'&&!TRMS.some(m=>m.id==='garments'))TRMS.push({id:'garments',n:'THE CREW',c:'#ff3d8b'});}catch(e){}
 {const _spr=spr;spr=function(n,t,x,y,flip,shear){const i=fidx(n,t);if(i<7000||i>=7500)return _spr(n,t,x,y,flip,shear);const j=i-7000,S=OGS;
   ctx.save();ctx.translate(Math.round(x),Math.round(y));if(SPR_S!==1)ctx.scale(SPR_S,SPR_S);if(flip)ctx.scale(-1,1);if(shear)ctx.transform(1,0,shear,1,0,0);
   if(n&&typeof n==='string'&&!OG.drawingMirror)OG.cur={j,x,y,flip:!!flip,S:SPR_S};OG.curT=G;if(IMG.ogs.complete&&IMG.ogs.naturalWidth)ctx.drawImage(IMG.ogs,(j%S.COLS)*S.CW,Math.floor(j/S.COLS)*S.CH,S.CW,S.CH,-S.AX,-S.AY,S.CW,S.CH);ctx.restore();};}
@@ -5705,7 +5779,7 @@ function ogDraw(){if(!OG_ON()||scene!=='play')return;const L=OG.lifa,d=P.face||1
 // beating the Static King hands it over
 {const _w=winStart;winStart=function(){const r=_w.apply(this,arguments);try{if(CUR==='2-B'&&!SH_OWN.includes('garments')){SH_OWN.push('garments');localStorage.setItem(SHIRT_OWN_K,JSON.stringify(SH_OWN));OG.unlockT=G;}}catch(e){}return r;};}
 function ogUnlockDraw(){if(OG.unlockT==null||G-OG.unlockT>5)return;const Zm=(LEVEL&&LEVEL.zoom)||1,vw=Math.ceil(W/Zm),a=Math.min(1,(G-OG.unlockT)*2,(5-(G-OG.unlockT)));ctx.globalAlpha=a;
-  T('NEW SHIRT',Math.round(vw/2),58,8,'#ffe6a8','center','#000');T('ONYX GARMENTS',Math.round(vw/2),76,16,'#ff3d8b','center','#000');ctx.globalAlpha=1;}
+  T('NEW SHIRT',Math.round(vw/2),58,8,'#ffe6a8','center','#000');T('THE CREW',Math.round(vw/2),76,16,'#ff3d8b','center','#000');ctx.globalAlpha=1;}
 {const _dh=drawHeavyFX;drawHeavyFX=function(x,y){_dh(x,y);if(scene!=='play')return;const dt=Math.min(.05,Math.max(0,G-(OG.lt||G)));OG.lt=G;if(!paused&&dt>0)ogStep(dt);ogDraw();ogUnlockDraw();};}
 /*OGEND*/
 
@@ -5724,7 +5798,7 @@ const STKN={p:[['HEAVY HANDS','the 3rd hit of z,z,z does +1 damage'],['WIND UP',
  diamond:[['SHARP EDGES','big hits chip a second enemy nearby'],['HOLD STILL','big hits freeze enemies a moment longer'],['SECOND FACET','the diamond shield blocks 2 hits'],['SHATTER','a full-charge heavy shatters onto enemies around it'],['DIAMOND FORM','a full-charge heavy freezes every enemy on screen']],
  onyx:[['LINGERING DARK','the shadow dash cuts enemies it passes through'],['BLACKOUT','heavy hits stun 0.8s longer'],['AFTERIMAGE','a shadow hits dashed-through enemies again'],['EYES OPEN','after 2s standing still, the next hit does +2'],['ERASED','once per combo, a heavy hit freezes time for everyone else']],
  garments:[['BIG BROTHER','baby onyx adds +1 damage every 2nd hit'],['QUICK HANDS','lifa recovers from a block in 3.5s'],['TWO KICKS','lifa also kicks on the 2nd combo hit'],['SHORT WORD','letters fill 50% faster'],['CREW LOVE','spell it out heals a heart']]};
-const STKNAME={base:'ONYX',diamond:'FOREVER CHANGING',onyx:'AFTER DARK',garments:'ONYX GARMENTS'},STKCOL={base:'#c79bff',diamond:'#8fe0ff',onyx:'#ff4d6d',garments:'#ff3d8b'};
+const STKNAME={base:'ONYX',diamond:'FOREVER CHANGING',onyx:'AFTER DARK',garments:'THE CREW'},STKCOL={base:'#c79bff',diamond:'#8fe0ff',onyx:'#ff4d6d',garments:'#ff3d8b'};
 let STKD={};try{STKD=JSON.parse(localStorage.getItem('stt_sk')||'{}')||{};}catch(e){STKD={};}
 const skSave=()=>{try{localStorage.setItem('stt_sk',JSON.stringify(STKD));}catch(e){}};
 const skShirt=()=>SH_ON||'base';
