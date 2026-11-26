@@ -297,7 +297,8 @@ const GIFT_CODES=Object.freeze({
   truths33ker:['diamond'],
   aftrhrs:['onyx'],
   onyxaccess:['diamond','onyx'],
-  'kh48-7m2q9v':['diamond','onyx']
+  'kh48-7m2q9v':['diamond','onyx'],
+  crew4life:['garments']
 });
 const redeemForm=document.getElementById('redeemForm');
 const redeemResult=document.getElementById('redeemResult');
@@ -321,7 +322,7 @@ redeemForm.addEventListener('submit',event=>{
       badge.className='found px';badge.textContent='✓ UNLOCKED IN-GAME';stage.append(badge);
     }
   });
-  const labels={diamond:'FOREVER CHANGING',onyx:'AFTER DARK'};
+  const labels={diamond:'FOREVER CHANGING',onyx:'AFTER DARK',garments:'THE CREW'};
   redeemResult.style.color='var(--grn)';
   redeemResult.textContent=newlyUnlocked.length
     ?'ACCESS GRANTED — THE TRUTH IS YOURS // '+newlyUnlocked.map(id=>labels[id]).join(' + ')+' UNLOCKED! Return to the game and reload to equip.'
