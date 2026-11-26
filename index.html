@@ -527,8 +527,8 @@ function updatePlayer(dt){
     if(Math.abs(b.x-P.x)<12&&b.y>P.y-46&&b.y<P.y+4){b.got=true;cash+=b.v;pop(b.x,b.y-8,'+'+b.v,b.v>=GOLD?'#ffe66d':'#9dffa0');spark(b.x,b.y,b.v>=GOLD?12:5,b.v>=GOLD?['#ffe66d','#fff']:['#9dffa0','#fff'],40);}}
   // smoke clouds: daze enemies, reveal secrets
   for(const c of clouds){c.t+=dt;const r=c.r=10+(PERK('cloud')?42:26)*Math.min(1,c.t/.45);if(c.t>(PERK('cloud')?1.3:1.0))continue;
-    for(const o of orbs)if(o.alive&&!o.daze&&Math.hypot(o.x-c.x,o.y-c.y)<r+8){o.daze=PERK('cloud')?5:3;o.lure=0;pop(o.x,o.y-14,'DAZED','#d9d3f0');}
-    for(const o of botsA)if(o.alive&&o.st!=='dead'&&!(o.daze>0)&&Math.hypot(o.x-c.x,o.y-18-c.y)<r+12){o.daze=PERK('cloud')?5:3;pop(o.x,o.y-46,'DAZED','#d9d3f0');}
+    for(const o of orbs)if(o.alive&&!o.daze&&Math.hypot(o.x-c.x,o.y-c.y)<r+8){o.daze=(PERK('cloud')?5:3)+(typeof skHas==='function'&&!SH_ON&&skHas('s',1)?1:0);o.lure=0;pop(o.x,o.y-14,'DAZED','#d9d3f0');}
+    for(const o of botsA)if(o.alive&&o.st!=='dead'&&!(o.daze>0)&&Math.hypot(o.x-c.x,o.y-18-c.y)<r+12){o.daze=(PERK('cloud')?5:3)+(typeof skHas==='function'&&!SH_ON&&skHas('s',1)?1:0);pop(o.x,o.y-46,'DAZED','#d9d3f0');}
     revealNear(c.x,c.y,r);}
   clouds=clouds.filter(c=>c.t<1.4);
   // thrown bills: fly, land, then lure enemies until they fade
@@ -652,7 +652,7 @@ function hitBot(o,w){const dir=w.away?(o.x>=P.x?1:-1):P.face;rumble(w.heavy||w.f
   o.hp-=w.dmg;o.stun=o.hp>0?(w.fin?.85:w.dmg>=2?.65:.55):null;o.fl=.12;o.daze=0;o.st='hit';o.t=0;o.kx=dir*Math.min(w.kx,170)*.9;aerJug(o,w);
   HS=Math.max(HS,w.stop||.045);if(w.shake)shakeT=Math.max(shakeT,w.shake);impact(o.x-dir*6,o.y-20,!!(w.heavy||w.fin||w.dmg>=2),w.col||(w.fin?'#ffe66d':'#ff9be8'));
   spark(o.x-dir*4,o.y-20,w.fin?20:12,['#fff','#ffe66d','#ffb43c'],w.fin?110:70);
-  P.hits=G-(P.lastHit??-9)<.9?(P.hits||0)+1:1;P.lastHit=G;cash+=20;pop(o.x,o.y-40,'+20','#9dffa0');
+  P.hits=(typeof skChain==='function'?skChain():G-(P.lastHit??-9)<.9)?(P.hits||0)+1:1;P.lastHit=G;cash+=20;pop(o.x,o.y-40,'+20','#9dffa0');
   if(w.fin){cash+=50;pop(o.x,o.y-54,'FINISH +50','#ffe66d');}else if(P.hits>=2)pop(P.x,P.y-52,P.hits+' HIT','#ff9be8');
   if(o.hp<=0){cash+=50;pop(o.x,o.y-60,'SCRAP +50','#ffb43c');spark(o.x,o.y-18,20,['#ffe66d','#ffb43c','#fff','#8a8aa8'],100);}}
 const BRROW={idle:[0,5,6,1],roll:[1,8,10,1],alert:[2,5,12,0],swipe:[3,6,11,0],charge:[4,3,12,1,2],hit:[5,4,10,0],dazed:[6,3,6,1,3],dead:[7,8,8,0]};
@@ -678,7 +678,7 @@ function hitOrb(o,w){if(o.kind==='bot')return hitBot(o,w);if(o.kind==='boss')ret
   o.hp=(o.hp==null?4:o.hp)-w.dmg;o.fl=.12;o.daze=0;o.lure=0;o.kx=dir*w.kx;o.ky=w.ky||0;o.hs=w.fin?.8:.55;
   HS=Math.max(HS,w.stop||.045);if(w.shake)shakeT=Math.max(shakeT,w.shake);impact(o.x-dir*5,o.y,!!(w.heavy||w.fin||w.dmg>=2),w.col||(w.fin?'#ffe66d':'#ff9be8'));
   spark(o.x-dir*4,o.y,w.fin?22:12,w.fin?['#fff','#ffe66d','#ff5ee8','#6fe8ff']:['#fff','#ffe66d','#ff5ee8'],w.fin?110:70);
-  P.hits=G-(P.lastHit??-9)<.9?(P.hits||0)+1:1;P.lastHit=G;
+  P.hits=(typeof skChain==='function'?skChain():G-(P.lastHit??-9)<.9)?(P.hits||0)+1:1;P.lastHit=G;
   cash+=20;pop(o.x,o.y-12,'+20','#9dffa0');
   if(w.fin){cash+=50;pop(o.x,o.y-26,'FINISH +50','#ffe66d');}
   else if(P.hits>=2)pop(P.x,P.y-52,P.hits+' HIT','#ff9be8');
@@ -727,7 +727,7 @@ function drawImpact(an,at){if(!IMP)return;const k=G-IMP.t,cx=Math.round(IMP.x-ca
 const DF=k=>1129+k;
 ANIM.dashA={f:[DF(2),DF(3),DF(4),DF(4),DF(5),DF(5),DF(6),DF(6),DF(7),DF(7),DF(8),DF(8),DF(9),DF(9),DF(10),DF(10),DF(11),DF(11)],fps:30};
 const DASH={wind:.067,burst:.33,strike:[.233,.40],end:.60,cancel:.40,v:240,box:[2,38,-42,-4]};
-function canDash(s){if((P.dashCD||0)>0||(P.air&&(P.airDash||0)>=(PERK('dash')?2:1)))return false;
+function canDash(s){if((P.dashCD||0)>0||(P.air&&(P.airDash||0)>=(PERK('dash')?2:1)+(typeof skDashExtra==='function'?skDashExtra():0)))return false;
   if(['hurt','puff','dash','upc','spread','pull','count','pocket'].includes(s))return false;
   if(s==='atk'&&P.t*30<MOVES[P.mv].lock)return false;if(s==='upland'&&P.t<.3)return false;
   if((s==='crouch'||s==='crawl')&&blocked(P.x,P.y,40))return false;return true;}
@@ -1926,7 +1926,7 @@ function xdashStep(dt){const X=P.xdash;P.vy=0;P.vx=P.face*360;if(X.o.jug){X.o.ju
   if((P.x-X.x)*P.face>=0||P.t>.35){P.vx=0;P.face=-P.face;P.xdash=null;setSt('jump');P.t=.3;P.alock=Math.max(P.alock||0,.38);P.airDash=Math.max(0,(P.airDash||1)-1);
     pop(P.x,P.y-60,'CROSS-UP','#8ff0ff');spark(P.x,P.y-24,10,['#fff','#8ff0ff',WEAR('onyx')?'#ff4d6d':WEAR('diamond')?'#8fe0ff':'#c9a6ff'],80);sfx('dashW',.5);}}
 // air lock: every air hit on a launched enemy holds you both in the air a moment longer (a little less each hit, never less than a short beat)
-const AIRLOCK=()=>Math.max(.2,.44-(P.airHits||0)*.008);
+const AIRLOCK=()=>Math.max(.2,.44-(P.airHits||0)*.008)*(typeof skAirMul==='function'?skAirMul():1);
 // called from the air branch of updatePlayer
 function aerAir(s,dir,dt){if(aerChase())return;
   if(P.alock>0&&s!=='aslam'&&s!=='adive'){P.alock-=dt;P.vy=Math.min(P.vy,0);}   // gravity is off while the air lock holds (see the air branch of the physics)
@@ -2767,7 +2767,7 @@ function skbUpdate(dt){if(!d2bOn())return;const L=LEVEL.d2b,K=L.K,FY=skFY();if(S
 function skHit(o,w){if(SK.st==='defeat'||SK.st==='rise'||SK.st==='sjump'||SK.st==='under'||SK.st==='sink')return;const d=w.dmg||1,big=!!(w.heavy||w.fin||d>=2);
   SK.fl=.1;HS=Math.max(HS,w.stop||.05);if(w.shake)shakeT=Math.max(shakeT,w.shake);rumble(big?.7:.3,big?.9:.5,big?170:80);impact(o.x,o.y,big,'#ff3040');
   spark(o.x,o.y,big?14:7,['#fff','#cfcfcf','#ff3040'],big?100:70);pop(o.x,o.y-26,'-'+d,'#ff5060');cash+=10;
-  P.hits=G-(P.lastHit??-9)<.9?(P.hits||0)+1:1;P.lastHit=G;
+  P.hits=(typeof skChain==='function'?skChain():G-(P.lastHit??-9)<.9)?(P.hits||0)+1:1;P.lastHit=G;
   if(SK.st==='stagger')return;
   SK.hp-=d;if(SK.st==='screen'){SK.scrHits++;}
   if(big&&G-SK.lastVo>7&&SK.hp>0){SK.lastVo=G;skSay(SK_LINES.hurt[Math.floor(Math.random()*SK_LINES.hurt.length)],2.2);}
@@ -3156,7 +3156,7 @@ function rrmUpdate(dt){const FY=LEVEL.ground*TS,R=RRM;if(R.s0!==s0){R.s0=s0;rrmS
   if(R.st!=='end'&&R.st!=='intro'){const fx=P.x+P.face*16,fy=P.y-24;if(Math.abs(fx-R.x)<16&&fy>FY-56&&fy<FY+2)BOSS.prox={kind:'rrm',id:'rrm',x:R.x,y:FY-24,alive:true,hp:99};}}
 function rrmHit(o,w){const R=RRM;if(R.st==='end'||R.st==='intro')return;const pw=.45+.85*rrPages()/15;let d=(w.dmg||1)*pw;d=Math.floor(d)+(Math.random()<d%1?1:0);
   R.fl=.1;HS=Math.max(HS,w.stop||.05);if(w.shake)shakeT=Math.max(shakeT,w.shake);impact(o.x,o.y,!!(w.heavy||w.fin),'#c9a6ff');spark(o.x,o.y,10,['#fff','#c9a6ff','#5a2a7a'],80);
-  P.hits=G-(P.lastHit??-9)<.9?(P.hits||0)+1:1;P.lastHit=G;
+  P.hits=(typeof skChain==='function'?skChain():G-(P.lastHit??-9)<.9)?(P.hits||0)+1:1;P.lastHit=G;
   if(d<=0){pop(o.x,o.y-24,'...','#8a7a9a');return;}R.hp-=d;pop(o.x,o.y-24,'-'+d,'#c9a6ff');
   if(R.st!=='atk'||w.heavy||w.fin){R.st='hurt';R.t=0;R.kx=P.face*(w.fin||w.heavy?160:60);}
   if(R.hp<=Math.round(R.hpMax*.3)&&!R.low){R.low=1;rrSay('THE RERUN','...THEN WHY ARE YOU STILL HERE?','#c9a6ff',1,3);}
@@ -3455,7 +3455,7 @@ function drawWin(dt){const w=WIN;w.t+=dt;const t=w.t,a=Math.min(1,t/.4),n=w.rows
     T('RANK',254,88,8,'#d9d3f0','center');T(w.rank,257,126,32,'#12042c','center');T(w.rank,255,124,32,rt<.12?'#ffffff':col,'center');
     if(rt<.35){ctx.globalAlpha=1-rt/.35;const R=Math.round(rt*90);px(254-R,104,R*2,1,col);px(254,104-R,1,R*2,col);ctx.globalAlpha=1;}
     if(w.best&&rt>.4&&Math.floor(G*3)%2)T('NEW BEST!',254,144,8,'#ffe66d','center');}
-  if(t>=w.end-.4){T(CUR==='1-2'?'NEXT: BRING LIFA THE LIGHTER':CUR==='1-3'?'THE EYE IS ON EVERY SCREEN...':CUR==='eye'?'THE EYE FLED INTO THE BROADCAST...':'TO BE CONTINUED...',CX,166,8,'#ffe66d','center');}if(CUR==='2-B'&&t>=w.end-.4&&typeof SHIRTS!=='undefined'&&SHIRTS.garments){T('NEW SHIRT UNLOCKED: ONYX GARMENTS',CX,180,8,'#ff3d8b','center','#000');}
+  if(t>=w.end-.4){T(CUR==='1-2'?'NEXT: BRING LIFA THE LIGHTER':CUR==='1-3'?'THE EYE IS ON EVERY SCREEN...':CUR==='eye'?'THE EYE FLED INTO THE BROADCAST...':'TO BE CONTINUED...',CX,166,8,'#ffe66d','center');}if(CUR==='2-B'&&t>=w.end-.4&&typeof SHIRTS!=='undefined'&&SHIRTS.garments){T('NEW SHIRT UNLOCKED: ONYX GARMENTS',CX,180,8,'#ff3d8b','center','#000');}if(t>=w.end-.4&&typeof STKS!=='undefined'&&STKS.earned){T('+'+STKS.earned+' THREADS  ('+STKNAME[skShirt()]+')',CX,194,8,STKCOL[skShirt()],'center','#000');}
   if(t>=w.end){endBtn('CONTINUE',CX-98,176,92,w.sel===0);endBtn('REPLAY',CX+6,176,92,w.sel===1);
     const p=PR('LEFT/RIGHT  CHOOSE     ENTER  SELECT','[A] SELECT','');if(p)TP(p,CX,204,8,'#6a5a98','center');}}
 function endPick(i){for(const k in hit)delete hit[k];
@@ -5614,6 +5614,8 @@ TRROWS.splice(5,0,{l:'I-FRAME VIEW',t:'tog',k:'ifv'});
 
 
 
+
+
 /*OG*/
 // ---- ONYX GARMENTS (reward for beating the Static King). THE CREW: Baby Onyx rides on Onyx's shoulder and jabs along with his hits,
 //      Lifa follows behind, flying-kicks on the finisher and blocks a hit for him (then needs 6 s). CUT & PASTE: hits knock collage letters loose;
@@ -5654,7 +5656,7 @@ function ogStep(dt){if(!OG_ON()||scene!=='play')return;const L=OG.lifa,d=P.face|
   // dash: crew swap
   if(P.st==='dash'&&OG.ps!=='dash'){ogScrap(P.x,P.y-24,14,90);const ox=P.x;setTimeout(()=>{L.x=ox;ogScrap(ox,L.y-12,8,60);},60);}
   // finisher: Lifa's flying kick
-  if(P.st==='atk'&&P.mv==='fin'&&G-OG.lastFin>.4){OG.lastFin=G;L.kt=G;L.kx=L.x;L.kfrom=L.x;L.kto=P.x+d*34;L.face=d;}
+  if(P.st==='atk'&&(P.mv==='fin'||(P.mv==='cross'&&typeof skHas==='function'&&skHas('s',3)))&&G-OG.lastFin>.4){OG.lastFin=G;L.kt=G;L.kx=L.x;L.kfrom=L.x;L.kto=P.x+d*34;L.face=d;}
   const kicking=G-L.kt<.42;
   if(kicking){const u=(G-L.kt)/.42;L.x=L.kfrom+(L.kto-L.kfrom)*Math.min(1,u*1.6);
     if(u>.35&&!L.khit){L.khit=1;let best=null,bd=70;for(const o of botsA){if(!o.alive)continue;const dd=Math.abs(o.x-L.x);if(dd<bd&&Math.abs(o.y-L.y)<40){bd=dd;best=o;}}
@@ -5665,7 +5667,7 @@ function ogStep(dt){if(!OG_ON()||scene!=='play')return;const L=OG.lifa,d=P.face|
   for(const p of OG.scraps){p.t+=dt;p.vy+=260*dt;p.vx*=Math.pow(.3,dt);p.x+=p.vx*dt;p.y+=p.vy*dt;p.r+=dt*6;}
   for(let i=OG.scraps.length-1;i>=0;i--)if(OG.scraps[i].t>OG.scraps[i].L)OG.scraps.splice(i,1);
   // Spell It Out lands on frame 9
-  if(OG.spell>0&&!OG.did&&G-OG.spell>.62){OG.did=1;shakeT=Math.max(shakeT,.45);rumble(1,1,450);HS=Math.max(HS,.1);
+  if(OG.spell>0&&!OG.did&&G-OG.spell>.62){OG.did=1;if(typeof skHas==='function'&&skHas('s',5)&&P.hp<MAXHP()){P.hp++;pop(P.x,P.y-70,'+1 HEART','#ff9bc8');}shakeT=Math.max(shakeT,.45);rumble(1,1,450);HS=Math.max(HS,.1);
     const Zm=LEVEL.zoom||1,vw=W/Zm;OG.inner=1;for(const o of botsA){if(!o.alive)continue;if(o.x>camX-20&&o.x<camX+vw+20){try{hitOrb(o,{dmg:3,heavy:1,kx:(o.x<P.x?-1:1)*200,ky:-120,stop:.08,shake:.2});}catch(e){}ogScrap(o.x,o.y-20,10,120);}}OG.inner=0;
     for(let i=0;i<12;i++)ogScrap(camX+vw*(i+.5)/12,camY+40,4,60);try{sfx('slam',1.2);}catch(e){}}
   OG.ps=P.st;}
@@ -5685,12 +5687,12 @@ function ogDraw(){if(!OG_ON()||scene!=='play')return;const L=OG.lifa,d=P.face||1
     if(G-OG.spell<1.6&&G-OG.spell>.5){ctx.globalAlpha=Math.max(0,1-(G-OG.spell-.5)/1.1);T('SPELL IT OUT!',Math.round(vw/2),by+28,16,'#ff3d8b','center','#000');ctx.globalAlpha=1;}}}
 // hits: Baby Onyx jabs along (every 3rd hit +1), letters fly off, 12 letters = Spell It Out
 {const _ho=hitOrb;hitOrb=function(o,w){if(!OG_ON()||OG.inner||!o)return _ho(o,w);OG.hits++;OG.baby.jt=G;
-  if(OG.hits%3===0&&w){w=Object.assign({},w,{dmg:(w.dmg||1)+1});pop(o.x+8,o.y-34,'+1','#ff9bc8');}
+  if(OG.hits%(typeof skHas==='function'&&skHas('s',1)?2:3)===0&&w){w=Object.assign({},w,{dmg:(w.dmg||1)+1});pop(o.x+8,o.y-34,'+1','#ff9bc8');}
   const r=_ho(o,w);ogScrap(o.x,o.y-20,3,70);
-  if(G-OG.spell>1.4){OG.n++;if(OG.n>=12){OG.n=0;OG.spell=G;OG.did=0;P.inv=Math.max(P.inv,1.2);try{sfx('tglitch',.8);}catch(e){}}}
+  if(G-OG.spell>1.4){OG.n+=(typeof skHas==='function'&&skHas('s',4)?1.5:1);if(OG.n>=12){OG.n=0;OG.spell=G;OG.did=0;P.inv=Math.max(P.inv,1.2);try{sfx('tglitch',.8);}catch(e){}}}
   return r;};}
 // Lifa steps in front of a hit
-{const _db=diaBlock;diaBlock=function(o){if(OG_ON()&&OG.lifa.cd<=0&&P.inv<=0&&P.st!=='hurt'){const L=OG.lifa;L.cd=6;L.bt=G;L.x=P.x+(o&&o.x<P.x?-1:1)*14;P.inv=Math.max(P.inv,.6);
+{const _db=diaBlock;diaBlock=function(o){if(OG_ON()&&OG.lifa.cd<=0&&P.inv<=0&&P.st!=='hurt'){const L=OG.lifa;L.cd=(typeof skHas==='function'&&skHas('s',2)?3.5:6);L.bt=G;L.x=P.x+(o&&o.x<P.x?-1:1)*14;P.inv=Math.max(P.inv,.6);
     pop(P.x,P.y-60,'LIFA BLOCKED IT!','#c58bff');ogScrap(L.x,L.y-14,8,70);HS=Math.max(HS,.06);try{sfx('shieldup');}catch(e){}return true;}return _db(o);};}
 // beating the Static King hands it over
 {const _w=winStart;winStart=function(){const r=_w.apply(this,arguments);try{if(CUR==='2-B'&&!SH_OWN.includes('garments')){SH_OWN.push('garments');localStorage.setItem(SHIRT_OWN_K,JSON.stringify(SH_OWN));OG.unlockT=G;}}catch(e){}return r;};}
@@ -5698,6 +5700,120 @@ function ogUnlockDraw(){if(OG.unlockT==null||G-OG.unlockT>5)return;const Zm=(LEV
   T('NEW SHIRT',Math.round(vw/2),58,8,'#ffe6a8','center','#000');T('ONYX GARMENTS',Math.round(vw/2),76,16,'#ff3d8b','center','#000');ctx.globalAlpha=1;}
 {const _dh=drawHeavyFX;drawHeavyFX=function(x,y){_dh(x,y);if(scene!=='play')return;const dt=Math.min(.05,Math.max(0,G-(OG.lt||G)));OG.lt=G;if(!paused&&dt>0)ogStep(dt);ogDraw();ogUnlockDraw();};}
 /*OGEND*/
+
+
+
+
+
+
+
+/*SK*/
+// ================= SHIRT SKILL TREES: Threads are earned by the shirt you wear; each shirt has Power, Flow and its own Style branch (5 nodes each, bought in order).
+const STKC=[1,2,3,4,6],STKB=['p','f','s'];
+const STKN={p:[['HEAVY HANDS','the 3rd hit of z,z,z does +1 damage'],['WIND UP','heavy attack charges 25% faster'],['LAUNCH PAD','the launcher does +1 damage and hits harder'],['AFTERSHOCK','a full-charge heavy hits one extra time'],['TENTH HIT','every 10th hit in a combo does double damage']],
+ f:[['LOOSE TIMING','chain the next combo hit sooner'],['HANG TIME','enemies stay locked in the air 30% longer'],['KEEP IT GOING','the combo counter waits 50% longer'],['DOUBLE BACK','one extra air dash per combo'],['COMBO SAVE','once per combo, a late hit still counts']],
+ base:[['THICK SMOKE','puff clouds daze 1s longer'],['BIG SPENDER','every knockout pays +$25'],['HOTBOX','dazed enemies take 50% more damage'],['POCKET CHANGE','every finisher pays +$10'],['KINGPIN','a 20-hit combo blows up in cash, hurting everyone near']],
+ diamond:[['SHARP EDGES','big hits chip a second enemy nearby'],['HOLD STILL','big hits freeze enemies a moment longer'],['SECOND FACET','the diamond shield blocks 2 hits'],['SHATTER','a full-charge heavy shatters onto enemies around it'],['DIAMOND FORM','a full-charge heavy freezes every enemy on screen']],
+ onyx:[['LINGERING DARK','the shadow dash cuts enemies it passes through'],['BLACKOUT','heavy hits stun 0.8s longer'],['AFTERIMAGE','a shadow hits dashed-through enemies again'],['EYES OPEN','after 2s standing still, the next hit does +2'],['ERASED','once per combo, a heavy hit freezes time for everyone else']],
+ garments:[['BIG BROTHER','baby onyx adds +1 damage every 2nd hit'],['QUICK HANDS','lifa recovers from a block in 3.5s'],['TWO KICKS','lifa also kicks on the 2nd combo hit'],['SHORT WORD','letters fill 50% faster'],['CREW LOVE','spell it out heals a heart']]};
+const STKNAME={base:'ONYX',diamond:'FOREVER CHANGING',onyx:'AFTER DARK',garments:'ONYX GARMENTS'},STKCOL={base:'#c79bff',diamond:'#8fe0ff',onyx:'#ff4d6d',garments:'#ff3d8b'};
+let STKD={};try{STKD=JSON.parse(localStorage.getItem('stt_sk')||'{}')||{};}catch(e){STKD={};}
+const skSave=()=>{try{localStorage.setItem('stt_sk',JSON.stringify(STKD));}catch(e){}};
+const skShirt=()=>SH_ON||'base';
+const skOf=id=>STKD[id]||(STKD[id]={th:0,p:0,f:0,s:0});
+const skHas=(b,n)=>{if(typeof TR!=='undefined'&&TR.on&&TR.skOn===false)return false;return skOf(skShirt())[b]>=n;};
+// ---- the numbers the nodes change
+const STKVAL={full0:null,ch0:null};
+function skGap(){return .9*(skHas('f',3)?1.5:1);}
+function skChain(){const dt=G-(P.lastHit??-9);if(dt<skGap())return true;if(skHas('f',5)&&!P.csave&&dt<skGap()*2.5){P.csave=1;pop(P.x,P.y-62,'COMBO SAVED','#9dffa0');return true;}P.csave=0;return false;}
+function skAirMul(){return skHas('f',2)?1.3:1;}
+function skDashExtra(){return skHas('f',4)?1:0;}
+function skStep(dt){if(scene!=='play')return;
+  if(STKVAL.full0==null)STKVAL.full0=HVY.full;HVY.full=STKVAL.full0*(skHas('p',2)?.75:1);
+  if(STKVAL.ch0==null)STKVAL.ch0={jab:MOVES.jab.chain,cross:MOVES.cross.chain};const lt=skHas('f',1)?.7:1;MOVES.jab.chain=Math.round(STKVAL.ch0.jab*lt);MOVES.cross.chain=Math.round(STKVAL.ch0.cross*lt);
+  // threads for long combos (once each per run)
+  if(STKS.s0!==s0){STKS.s0=s0;STKS.c15=0;STKS.c30=0;STKS.earned=0;STKS.kp=0;}
+  const h=P.hits||0;if(CUR!=='tr'){if(h>=15&&!STKS.c15){STKS.c15=1;skEarn(1,'15-HIT COMBO');}if(h>=30&&!STKS.c30){STKS.c30=1;skEarn(1,'30-HIT COMBO');}}
+  if(h<=1){STKS.kp=0;STKS.er=0;}
+  // standing still (Eyes Open)
+  if(P.st==='idle'&&!P.air){STKS.still=(STKS.still||0)+dt;}else if(P.st!=='atk')STKS.still=0;
+  // Lingering Dark / Afterimage
+  if(skShirt()==='onyx'&&skHas('s',1)&&P.st==='dash'){if(!STKS.dashSet)STKS.dashSet=new Set();for(const o of botsA){if(!o.alive||STKS.dashSet.has(o))continue;if(Math.abs(o.x-P.x)<20&&Math.abs(o.y-P.y)<40){STKS.dashSet.add(o);skInner(o,{dmg:1,stop:.03});spark(o.x,o.y-20,8,['#ff4d6d','#000','#fff'],80);
+      if(skHas('s',3))setTimeout(()=>{if(o.alive){skInner(o,{dmg:1,stop:.03});spark(o.x,o.y-20,8,['#ff4d6d','#000'],70);}},400);}}}else STKS.dashSet=null;
+  // diamond second facet: refresh when the shield comes back
+  if(P.sh&&!STKS.lastSh)STKS.facet=0;STKS.lastSh=P.sh;}
+const STKS={s0:-1};
+function skInner(o,w){STKS.inner=1;try{hitOrb(o,w);}catch(e){}STKS.inner=0;}
+function skFoes(x,r){return botsA.filter(o=>o.alive&&Math.abs(o.x-x)<r&&Math.abs(o.y-P.y)<60);}
+function skOnScreen(){const Zm=(LEVEL&&LEVEL.zoom)||1,vw=W/Zm;return botsA.filter(o=>o.alive&&o.x>camX-20&&o.x<camX+vw+20);}
+{const _ho=hitOrb;hitOrb=function(o,w){if(STKS.inner||!o||!w||scene!=='play')return _ho(o,w);const sh=skShirt();w=Object.assign({},w);let d=w.dmg||1;
+  const big=!!(w.heavy||w.fin||d>=2),full=w.heavy&&(P.hcharge||0)>=.95;
+  if(skHas('p',1)&&P.st==='atk'&&P.mv==='fin')d+=1;
+  if(skHas('p',3)&&(P.mv==='upper'||P.st==='upc')){d+=1;w.stop=(w.stop||.05)+.03;}
+  if(skHas('p',5)&&((P.hits||0)+1)%10===0){d*=2;pop(o.x,o.y-50,'TENTH HIT!','#ffe066');shakeT=Math.max(shakeT,.2);}
+  if(sh==='base'&&skHas('s',3)&&o.daze>0)d=Math.ceil(d*1.5);
+  if(sh==='onyx'&&skHas('s',4)&&STKS.still>=2){d+=2;STKS.still=0;pop(o.x,o.y-50,'EYES OPEN','#ff4d6d');}
+  w.dmg=d;const wasAlive=o.alive!==false&&(o.hp==null||o.hp>0);const r=_ho(o,w);
+  const ko=wasAlive&&(o.alive===false||(o.hp!=null&&o.hp<=0));
+  if(sh==='base'){if(skHas('s',2)&&ko){cash+=25;pop(o.x,o.y-40,'+$25','#9dffa0');}if(skHas('s',4)&&P.mv==='fin'&&P.st==='atk'){cash+=10;}
+    if(skHas('s',5)&&(P.hits||0)>=20&&!STKS.kp){STKS.kp=1;cash+=100;pop(P.x,P.y-70,'KINGPIN!','#9dffa0');shakeT=Math.max(shakeT,.35);for(const f of skFoes(P.x,80))skInner(f,{dmg:2,kx:(f.x<P.x?-1:1)*200,ky:-80});for(let i=0;i<24;i++)spark(P.x,P.y-30,1,['#9dffa0','#3a8a3a','#fff'],180);}}
+  if(sh==='diamond'){if(skHas('s',1)&&big){const f=skFoes(o.x,60).find(q=>q!==o);if(f){skInner(f,{dmg:1,stop:.02});spark(f.x,f.y-20,6,['#8fe0ff','#fff'],70);}}
+    if(skHas('s',2)&&big)o.daze=Math.max(o.daze||0,.6);
+    if(full&&!STKS.hv){STKS.hv=1;setTimeout(()=>STKS.hv=0,500);if(skHas('s',4))for(const f of skFoes(o.x,70))if(f!==o)skInner(f,{dmg:2,kx:(f.x<o.x?-1:1)*160});if(skHas('s',5)){for(const f of skOnScreen())f.daze=Math.max(f.daze||0,2);pop(P.x,P.y-70,'DIAMOND FORM','#8fe0ff');}}}
+  if(sh==='onyx'){if(skHas('s',2)&&w.heavy)o.daze=(o.daze||0)+.8;if(skHas('s',5)&&w.heavy&&!STKS.er){STKS.er=1;for(const f of skOnScreen())f.daze=Math.max(f.daze||0,1.5);STKS.erT=G;pop(P.x,P.y-70,'ERASED','#ff4d6d');}}
+  if(skHas('p',4)&&full&&!STKS.as){STKS.as=1;setTimeout(()=>{STKS.as=0;},400);setTimeout(()=>{if(o.alive!==false)skInner(o,{dmg:1,stop:.04,shake:.1});},130);}
+  return r;};}
+// second facet
+{const _db=diaBlock;diaBlock=function(o){const r=_db(o);if(r&&skShirt()==='diamond'&&skHas('s',3)&&!STKS.facet&&WEAR('diamond')){STKS.facet=1;setTimeout(()=>{P.sh=1;pop(P.x,P.y-60,'SECOND FACET','#8fe0ff');},50);}return r;};}
+// ---- earning Threads
+function skEarn(n,why){if(!n||CUR==='tr')return;const id=skShirt();skOf(id).th+=n;skSave();STKS.earned=(STKS.earned||0)+n;pop(P.x,P.y-80,'+'+n+' THREAD'+(n>1?'S':''),STKCOL[id]);}
+{const _w=winStart;winStart=function(){const r=_w.apply(this,arguments);try{if(CUR!=='tr'){let n=2+(RUN.hits===0?1:0);const boss=/B$/.test(CUR)||CUR==='eye';if(boss){let bs=[];try{bs=JSON.parse(localStorage.getItem('stt_sk_boss')||'[]');}catch(e){}if(!bs.includes(CUR)){bs.push(CUR);n+=5;try{localStorage.setItem('stt_sk_boss',JSON.stringify(bs));}catch(e){}}}
+  const id=skShirt();skOf(id).th+=n;skSave();STKS.earned=(STKS.earned||0)+n;}}catch(e){}return r;};}
+// ---- the SKILLS page (pause menu)
+const STKP={sh:0,c:0,r:0,msg:'',msgT:-9};
+function skShirts(){const o=['base'];for(const k of ['diamond','onyx','garments'])if((typeof SH_OWN!=='undefined'&&SH_OWN.includes(k))||SH_ON===k)o.push(k);return o;}
+function skBranchNodes(id,b){return b==='s'?STKN[id]:STKN[b];}
+function skBuy(){const id=skShirts()[STKP.sh],D=skOf(id),b=STKB[STKP.c],have=D[b];
+  if(STKP.r===5){if(!(D.p||D.f||D.s)){STKP.msg='NOTHING TO RESET';}else{for(const k of STKB){for(let i=0;i<D[k];i++)D.th+=STKC[i];D[k]=0;}skSave();STKP.msg='THREADS RETURNED';try{ui('uiSel');}catch(e){}}STKP.msgT=G;return;}
+  if(STKP.r<have){STKP.msg='ALREADY OWNED';STKP.msgT=G;return;}
+  if(STKP.r>have){STKP.msg='BUY THE ONE BELOW FIRST';STKP.msgT=G;return;}
+  const cost=STKC[have];if(D.th<cost){STKP.msg='NEED '+cost+' THREADS';STKP.msgT=G;try{ui('uiBack');}catch(e){}return;}
+  D.th-=cost;D[b]++;skSave();STKP.msg=skBranchNodes(id,b)[have][0]+' UNLOCKED';STKP.msgT=G;try{ui('uiSel');sfx('coin');}catch(e){}}
+function drawSkills(){const id=skShirts()[Math.min(STKP.sh,skShirts().length-1)],D=skOf(id),col=STKCOL[id];
+  ctx.fillStyle='#0e0620';ctx.fillRect(0,0,W,H);for(let y=0;y<H;y+=2){ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillRect(0,y,W,1);}
+  T('SKILLS',W/2,14,8,'#ffe6a8','center','#000');
+  T('<',22,30,8,'#a49bd6','center');T('>',W-22,30,8,'#a49bd6','center');T(STKNAME[id],W/2,32,8,col,'center','#000');
+  T('THREADS: '+D.th,W/2,44,8,'#ffffff','center','#000');
+  const heads=['POWER','FLOW','STYLE'],cx=[60,160,260];
+  for(let c=0;c<3;c++){const b=STKB[c],nodes=skBranchNodes(id,b),have=D[b];T(heads[c],cx[c],60,8,'#a49bd6','center');
+    for(let r=0;r<5;r++){const y=176-r*24,own=r<have,next=r===have,sel=STKP.c===c&&STKP.r===r,x=cx[c];
+      if(r<4)px(x,y-22,1,14,r<have-1?col:'#3a2a5a');
+      const pulse=next&&D.th>=STKC[r]?.6+.4*Math.sin(G*6):1;ctx.globalAlpha=own?1:next?pulse:.45;
+      px(x-9,y-9,18,18,sel?'#ffffff':'#1a1030');px(x-8,y-8,16,16,own?col:'#2a1c48');T(String(STKC[r]),x,y+4,8,own?'#111':'#d8c8ff','center');ctx.globalAlpha=1;}}
+  // selected node info
+  {const b=STKB[STKP.c];if(STKP.r<5){const n=skBranchNodes(id,b)[STKP.r],have=D[b];px(8,190,W-16,32,'rgba(0,0,0,.55)');T(n[0]+(STKP.r<have?'  (OWNED)':'  - '+STKC[STKP.r]+' THREADS'),W/2,201,8,col,'center','#000');T(n[1].toUpperCase(),W/2,214,8,'#e8e0ff','center','#000');}
+    else{px(8,190,W-16,32,'rgba(0,0,0,.55)');T('RESET THIS SHIRT: GET EVERY THREAD BACK',W/2,208,8,'#ffe6a8','center','#000');}}
+  const rs=STKP.r===5;px(W/2-34,62,68,1,'rgba(0,0,0,0)');T((rs?'> ':'')+'RESET'+(rs?' <':''),W-30,14,8,rs?'#ffe6a8':'#6a5a98','center');
+  if(G-STKP.msgT<1.6)T(STKP.msg,W/2,74,8,'#9dffa0','center','#000');}
+function skKey(code){const n=skShirts().length;
+  if(code==='Escape'||code==='Backspace'||code==='KeyC'){pview='menu';try{ui('uiBack');}catch(e){}return;}
+  if(code==='KeyQ'||code==='BracketLeft'){STKP.sh=(STKP.sh+n-1)%n;return;}if(code==='KeyE'||code==='BracketRight'){STKP.sh=(STKP.sh+1)%n;return;}
+  if(code==='ArrowLeft'||code==='KeyA'){if(STKP.r===5){STKP.sh=(STKP.sh+n-1)%n;}else STKP.c=(STKP.c+2)%3;try{ui('uiMove');}catch(e){}return;}
+  if(code==='ArrowRight'||code==='KeyD'){if(STKP.r===5){STKP.sh=(STKP.sh+1)%n;}else STKP.c=(STKP.c+1)%3;try{ui('uiMove');}catch(e){}return;}
+  if(code==='ArrowUp'||code==='KeyW'){STKP.r=Math.min(5,STKP.r+1);try{ui('uiMove');}catch(e){}return;}
+  if(code==='ArrowDown'||code==='KeyS'){STKP.r=Math.max(0,STKP.r-1);try{ui('uiMove');}catch(e){}return;}
+  if(code==='Enter'||code==='Space'||code==='KeyZ')skBuy();}
+function skTap(x,y){const n=skShirts().length;if(y<40&&x<40&&y>20){STKP.sh=(STKP.sh+n-1)%n;return;}if(y<40&&x>W-40&&y>20){STKP.sh=(STKP.sh+1)%n;return;}
+  if(y<22&&x<60){pview='menu';return;}if(y<22&&x>W-60){if(STKP.r===5)skBuy();else STKP.r=5;return;}
+  const cx=[60,160,260];for(let c=0;c<3;c++)for(let r=0;r<5;r++){const yy=176-r*24;if(Math.abs(x-cx[c])<14&&Math.abs(y-yy)<12){if(STKP.c===c&&STKP.r===r)skBuy();else{STKP.c=c;STKP.r=r;}return;}}}
+{const _sp=setPause;setPause=function(v){const r=_sp.apply(this,arguments);try{if(!PMENU.includes('SKILLS')){const i=PMENU.indexOf('SHIRTS');if(i>=0)PMENU.splice(i+1,0,'SKILLS');else PMENU.splice(Math.max(1,PMENU.length-1),0,'SKILLS');}}catch(e){}return r;};}
+{const _pc=pauseChoose;pauseChoose=function(){if(PMENU[psel]==='SKILLS'){pview='skills';STKP.sh=Math.max(0,skShirts().indexOf(skShirt()));STKP.c=0;STKP.r=Math.min(4,skOf(skShirt()).p);try{ui('uiSel');}catch(e){}return;}return _pc();};}
+{const _dp=drawPause;drawPause=function(){if(pview==='skills'){drawSkills();return;}return _dp();};}
+{const _k=keyDown;keyDown=function(code){if(paused&&pview==='skills'&&!trans){skKey(code);return;}return _k(code);};}
+{const _dh=drawHeavyFX;drawHeavyFX=function(x,y){_dh(x,y);if(scene!=='play'||paused)return;const dt=Math.min(.05,Math.max(0,G-(STKS.lt||G)));STKS.lt=G;skStep(dt);
+  if(STKS.erT&&G-STKS.erT<.6){const Zm=(LEVEL&&LEVEL.zoom)||1;ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='rgba(0,0,0,'+(.55*(1-(G-STKS.erT)/.6))+')';ctx.fillRect(0,0,W*4,H*4);ctx.restore();}};}
+try{if(typeof TRROWS!=='undefined'&&!TRROWS.some(r=>r.k==='skOn')){TR.skOn=true;TRROWS.splice(TRROWS.findIndex(r=>r.t==='go'),0,{l:'SKILL TREES',t:'tog',k:'skOn'});}}catch(e){}
+/*SKEND*/
 
 </script>
 <script src="snd.js"></script>
