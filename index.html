@@ -105,7 +105,7 @@ body.edit #edithelp{display:block}
 /* See The Truth loader: downloads game.js with a real progress bar, runs it, then fades when the title screen is ready.
    Also caches the game for offline play and offers installing it as an app. */
 (function(){
-var BUILD='debc33dfc5',BYTES=15407755,SBYTES=5506729,GJ='game.js?v='+BUILD,SJ='snd.js?v='+BUILD,CN='stt-'+BUILD;
+var BUILD='675fec82dd',BYTES=15561887,SBYTES=5506729,GJ='game.js?v='+BUILD,SJ='snd.js?v='+BUILD,CN='stt-'+BUILD;
 var $=function(i){return document.getElementById(i)},bar=$('ldb'),pct=$('ldp'),mb=$('ldmb'),ph=$('ldph'),tip=$('ldt'),ld=$('ld');
 var TIPS=["DON'T TOUCH THAT DIAL","TIP: HOLD HIT FOR A HEAVY PUNCH","TIP: DASH THROUGH ATTACKS","THE MALL NEVER CLOSES","THE STATIC KING IS WATCHING","TIP: NEW SHIRTS = NEW POWERS","TIP: ADD TO HOME SCREEN TO PLAY OFFLINE","STAY TUNED","YOU'VE SEEN THIS EPISODE BEFORE..."],ti=0;
 var tipT=setInterval(function(){ti=(ti+1)%TIPS.length;tip.style.opacity=0;setTimeout(function(){tip.textContent=TIPS[ti];tip.style.opacity=1;},300);},3200);

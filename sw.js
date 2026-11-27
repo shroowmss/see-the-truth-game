@@ -1,6 +1,6 @@
 /* See The Truth service worker: keeps the game on the device so it opens fast and plays offline.
    The page is fetched fresh when online (so updates show up); game.js / snd.js are versioned (?v=build) and served from cache. */
-const SHELL='stt-shell',BUILD='debc33dfc5';
+const SHELL='stt-shell',BUILD='675fec82dd';
 const SHELL_FILES=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','apple-touch-icon.png','favicon.ico'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(SHELL).then(c=>c.addAll(SHELL_FILES)).catch(()=>{}));});
 self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim());});
